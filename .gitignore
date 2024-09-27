@@ -16,3 +16,5 @@ venv*
 htmlcov
 token
 .DS_Store
+
+tested_model_api_config.json
