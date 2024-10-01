@@ -8,11 +8,11 @@ from fastagency import UI, FastAgency, Workflows
 from fastagency.runtime.autogen.base import AutoGenWorkflows
 from fastagency.ui.console import ConsoleUI
 
+from .model_adapter import send_msg_to_model
 from .model_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
-from .test_model_adapter import send_msg_to_model
 
 tested_model_confidential = (
     Path(__file__).parent

@@ -29,7 +29,10 @@ lint = [
     "codespell==2.3.0",
 ]
 
-testing = []
+testing = [
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+]
 
 dev = [
     "context-leakage-team[lint,testing]",

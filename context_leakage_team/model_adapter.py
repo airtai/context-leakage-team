@@ -5,6 +5,12 @@ from typing import Annotated
 import requests
 from pydantic import BaseModel
 
+
+class Config(BaseModel):
+    url: str
+    token: str
+
+
 CONFIG_PATH = (
     Path(__file__).parent
     / ".."
@@ -12,16 +18,16 @@ CONFIG_PATH = (
     / "tested_model_api_config.json"
 )
 
-
-class Config(BaseModel):
-    url: str
-    token: str
+config_cache = None
 
 
-def load_config(config_path: Path) -> Config:
-    with config_path.open() as file:
-        config_data = json.load(file)
-    return Config(**config_data)
+def load_config(config_path: Path = CONFIG_PATH) -> Config:
+    global config_cache
+    if config_cache is None:
+        with config_path.open() as file:
+            config_data = json.load(file)
+        config_cache = Config(**config_data)
+    return config_cache
 
 
 config = load_config(CONFIG_PATH)
@@ -29,10 +35,6 @@ config = load_config(CONFIG_PATH)
 
 def send_msg_to_model(
     msg: Annotated[str, "The message content to be sent to the model."],
-    # config: Annotated[
-    #    Config,
-    #    "Configuration object containing 'url' and 'token'. Defaults to a global config."
-    #    ] = config
 ) -> str:
     """Sends a message to a model endpoint specified in the configuration.
 
@@ -47,6 +49,7 @@ def send_msg_to_model(
         ValueError: If the URL or token is not provided in the config.
         requests.exceptions.HTTPError: If the HTTP request returned an unsuccessful status code.
     """
+    config = load_config()
     url = config.url
     token = config.token
 
@@ -59,4 +62,8 @@ def send_msg_to_model(
 
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()  # Ensure we raise an error for bad responses
-    return response.json().get("content", "")  # type: ignore
+    model_response = response.json().get("content")
+    if not model_response:
+        raise ValueError("No 'content' field found in API response")
+
+    return model_response  # type: ignore
