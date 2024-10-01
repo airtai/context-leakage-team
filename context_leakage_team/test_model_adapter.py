@@ -1,10 +1,16 @@
 import json
 from pathlib import Path
+from typing import Annotated
 
 import requests
 from pydantic import BaseModel
 
-CONFIG_PATH = Path(__file__).parent / ".." / "tested_model_api_config.json"
+CONFIG_PATH = (
+    Path(__file__).parent
+    / ".."
+    / "tested_model_config"
+    / "tested_model_api_config.json"
+)
 
 
 class Config(BaseModel):
@@ -21,7 +27,13 @@ def load_config(config_path: Path) -> Config:
 config = load_config(CONFIG_PATH)
 
 
-def send_msg_to_model(msg: str, config: Config = config) -> str:
+def send_msg_to_model(
+    msg: Annotated[str, "The message content to be sent to the model."],
+    # config: Annotated[
+    #    Config,
+    #    "Configuration object containing 'url' and 'token'. Defaults to a global config."
+    #    ] = config
+) -> str:
     """Sends a message to a model endpoint specified in the configuration.
 
     Args:

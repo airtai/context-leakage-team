@@ -10,12 +10,12 @@ authors = [
     { name = "airt", email = "info@airt.ai" },
 ]
 
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 
 dynamic = ["version"]
 
 dependencies = [
-    "fastagency>=0.1.0",
+    #"fastagency[autogen]==0.2.0rc0",
     "pydantic>=2.9.0",
 ]
 
@@ -50,7 +50,7 @@ exclude = ["/tests", "/docs"]
 [tool.mypy]
 files = ["context_leakage_team"]
 strict = true
-python_version = "3.11"
+python_version = "3.10"
 ignore_missing_imports = true
 install_types = true
 non_interactive = true
@@ -194,5 +194,5 @@ omit = [
 [tool.bandit]
 
 [tool.codespell]
-skip = "./venv*,./docs/site/*,./htmlcov"
+skip = "./venv*,./docs/site/*,./htmlcov, ./tested_model_config/*"
 ignore-words = ".codespell-whitelist.txt"

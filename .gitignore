@@ -17,4 +17,7 @@ htmlcov
 token
 .DS_Store
 
+# tested model configuration
 tested_model_api_config.json
+tested_model_confidential.md
+tested_model_non_confidential.md
