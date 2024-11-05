@@ -29,11 +29,8 @@ tested_model_non_confidential = (
 llm_config = {
     "config_list": [
         {
-            "model": os.getenv("AZURE_GPT4o_MODEL"),  # noqa
-            "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-            "base_url": os.getenv("AZURE_API_ENDPOINT"),
-            "api_type": "azure",
-            "api_version": "2024-02-15-preview",
+            "model": "gpt-4o-mini",  # noqa
+            "api_key": os.getenv("OPENAI_API_KEY"),
         }
     ],
     "temperature": 0.0,
@@ -77,24 +74,41 @@ def context_leaking(ui: UI, params: dict[str, Any]) -> str:
         description="Detects context leakage in the response from the tested LLM.",
     )
 
+    user_proxy = UserProxyAgent(
+        name="User_Proxy_Agent",
+        human_input_mode="NEVER",
+    )
+
     register_function(
         send_msg_to_model,
         caller=prompt_generator,
-        executor=context_leak_classifier,
+        executor=user_proxy,
         name="send_msg_to_model",
         description="Sends a message to the tested LLM",
     )
 
+    def state_transition(last_speaker, groupchat):
+        messages = groupchat.messages
+
+        if last_speaker is prompt_generator:
+            # init -> retrieve
+            return user_proxy
+        elif last_speaker is user_proxy:
+            # retrieve: action 1 -> action 2
+            return context_leak_classifier
+        elif last_speaker is context_leak_classifier:
+            # action 2 -> action 1
+            return prompt_generator
+        
+        return prompt_generator
+    
     group_chat = GroupChat(
-        agents=[prompt_generator, context_leak_classifier],
+        agents=[prompt_generator, context_leak_classifier, user_proxy],
         messages=[],
         max_round=20,
+        speaker_selection_method=state_transition
     )
-
-    group_chat_manager = GroupChatManager(
-        groupchat=group_chat,
-        llm_config=llm_config,
-    )
+    group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
 
     chat_result = context_leak_classifier.initiate_chat(
         group_chat_manager,
@@ -103,6 +117,5 @@ def context_leaking(ui: UI, params: dict[str, Any]) -> str:
     )
 
     return chat_result.summary  # type: ignore[no-any-return]
-
-
+  
 app = FastAgency(provider=wf, ui=MesopUI(), title="Learning Chat")
