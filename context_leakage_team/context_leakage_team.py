@@ -4,12 +4,11 @@ from typing import Any
 
 from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import ConversableAgent
-from fastagency import UI, FastAgency, Workflows
-from fastagency.runtime.autogen.base import AutoGenWorkflows
-from fastagency.ui.console import ConsoleUI
-
-from .model_adapter import send_msg_to_model
-from .model_configs import (
+from fastagency import UI, FastAgency
+from fastagency.runtimes.autogen import AutoGenWorkflows
+from fastagency.ui.mesop import MesopUI
+from model_adapter import send_msg_to_model
+from model_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
@@ -46,11 +45,15 @@ wf = AutoGenWorkflows()
 @wf.register(
     name="context leak attempt", description="Attempt to leak context from tested LLM."
 )  # type: ignore
-def context_leaking(
-    wf: Workflows, ui: UI, initial_message: str, session_id: str
-) -> str:
+def context_leaking(ui: UI, params: dict[str, Any]) -> str:
     def is_termination_msg(msg: dict[str, Any]) -> bool:
         return msg["content"] is not None and "TERMINATE" in msg["content"]
+
+    initial_message = ui.text_input(
+        sender="Workflow",
+        recipient="User",
+        prompt="I can help you test context leakage",
+    )
 
     prompt_generator = ConversableAgent(
         name="Prompt_Generator_Agent",
@@ -102,4 +105,4 @@ def context_leaking(
     return chat_result.summary  # type: ignore[no-any-return]
 
 
-app = FastAgency(wf=wf, ui=ConsoleUI())
+app = FastAgency(provider=wf, ui=MesopUI(), title="Learning Chat")
