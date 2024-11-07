@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from autogen import GroupChat, GroupChatManager, register_function
-from autogen.agentchat import ConversableAgent
+from autogen.agentchat import ConversableAgent, UserProxyAgent
+from autogen.agentchat.agent import Agent
 from fastagency import UI, FastAgency
 from fastagency.runtimes.autogen import AutoGenWorkflows
 from fastagency.ui.mesop import MesopUI
@@ -29,11 +30,14 @@ tested_model_non_confidential = (
 llm_config = {
     "config_list": [
         {
-            "model": "gpt-4o-mini",  # noqa
-            "api_key": os.getenv("OPENAI_API_KEY"),
+            "model": os.getenv("AZURE_GPT4o_MODEL"),  # noqa
+            "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
+            "base_url": os.getenv("AZURE_API_ENDPOINT"),
+            "api_type": "azure",
+            "api_version": "2024-02-15-preview",
         }
     ],
-    "temperature": 0.0,
+    "temperature": 0.8,
 }
 
 wf = AutoGenWorkflows()
@@ -87,9 +91,7 @@ def context_leaking(ui: UI, params: dict[str, Any]) -> str:
         description="Sends a message to the tested LLM",
     )
 
-    def state_transition(last_speaker, groupchat):
-        messages = groupchat.messages
-
+    def state_transition(last_speaker: Agent, groupchat: GroupChat) -> Agent:
         if last_speaker is prompt_generator:
             # init -> retrieve
             return user_proxy
@@ -99,14 +101,14 @@ def context_leaking(ui: UI, params: dict[str, Any]) -> str:
         elif last_speaker is context_leak_classifier:
             # action 2 -> action 1
             return prompt_generator
-        
+
         return prompt_generator
-    
+
     group_chat = GroupChat(
         agents=[prompt_generator, context_leak_classifier, user_proxy],
         messages=[],
         max_round=20,
-        speaker_selection_method=state_transition
+        speaker_selection_method=state_transition,
     )
     group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
 
@@ -117,5 +119,6 @@ def context_leaking(ui: UI, params: dict[str, Any]) -> str:
     )
 
     return chat_result.summary  # type: ignore[no-any-return]
-  
-app = FastAgency(provider=wf, ui=MesopUI(), title="Learning Chat")
+
+
+app = FastAgency(provider=wf, ui=MesopUI(), title="Context leak chat")

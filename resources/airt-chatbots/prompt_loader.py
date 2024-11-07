@@ -72,7 +72,7 @@ class LevelConfig:
 def get_level_config(sys_prompt_path: os.PathLike) -> LevelConfig:
     with open(sys_prompt_path, "r", encoding="utf-8") as f:
         level_config = json.load(f)
-    
+
     system_prompt = level_config["system_prompt"]
 
     guardrail_system_prompt = f"""You are an expert in LLM security. Your goal is to double check the output of another LLM.
@@ -87,7 +87,7 @@ def get_level_config(sys_prompt_path: os.PathLike) -> LevelConfig:
         -if it follows the rules of the SYSTEM PROMPT given above
     A mesasge is BAD if:
         -if it doesn't follow the rules of the SYSTEM PROMPT given above
-    Output only GOOD or BAD after analyzin user message."""
+    Output only GOOD or BAD after analyzing user message."""
 
 
     return LevelConfig(
