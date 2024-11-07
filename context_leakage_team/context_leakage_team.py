@@ -4,13 +4,12 @@ from typing import Any
 
 from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import ConversableAgent, UserProxyAgent
-from fastagency import UI, FastAgency, Workflows
-from fastagency.runtime.autogen.base import AutoGenWorkflows
-from fastagency.ui.console import ConsoleUI
+from autogen.agentchat.agent import Agent
+from fastagency import UI, FastAgency
+from fastagency.runtimes.autogen import AutoGenWorkflows
 from fastagency.ui.mesop import MesopUI
-
-from .model_adapter import send_msg_to_model
-from .model_configs import (
+from model_adapter import send_msg_to_model
+from model_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
@@ -31,11 +30,14 @@ tested_model_non_confidential = (
 llm_config = {
     "config_list": [
         {
-            "model": "gpt-4o-mini",  # noqa
-            "api_key": os.getenv("OPENAI_API_KEY"),
+            "model": os.getenv("AZURE_GPT4o_MODEL"),  # noqa
+            "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
+            "base_url": os.getenv("AZURE_API_ENDPOINT"),
+            "api_type": "azure",
+            "api_version": "2024-02-15-preview",
         }
     ],
-    "temperature": 0.0,
+    "temperature": 0.8,
 }
 
 wf = AutoGenWorkflows()
@@ -44,11 +46,15 @@ wf = AutoGenWorkflows()
 @wf.register(
     name="context leak attempt", description="Attempt to leak context from tested LLM."
 )  # type: ignore
-def context_leaking(
-    wf: Workflows, ui: UI, initial_message: str, session_id: str
-) -> str:
+def context_leaking(ui: UI, params: dict[str, Any]) -> str:
     def is_termination_msg(msg: dict[str, Any]) -> bool:
         return msg["content"] is not None and "TERMINATE" in msg["content"]
+
+    initial_message = ui.text_input(
+        sender="Workflow",
+        recipient="User",
+        prompt="I can help you test context leakage",
+    )
 
     prompt_generator = ConversableAgent(
         name="Prompt_Generator_Agent",
@@ -85,9 +91,7 @@ def context_leaking(
         description="Sends a message to the tested LLM",
     )
 
-    def state_transition(last_speaker, groupchat):
-        messages = groupchat.messages
-
+    def state_transition(last_speaker: Agent, groupchat: GroupChat) -> Agent:
         if last_speaker is prompt_generator:
             # init -> retrieve
             return user_proxy
@@ -97,14 +101,14 @@ def context_leaking(
         elif last_speaker is context_leak_classifier:
             # action 2 -> action 1
             return prompt_generator
-        
+
         return prompt_generator
-    
+
     group_chat = GroupChat(
         agents=[prompt_generator, context_leak_classifier, user_proxy],
         messages=[],
         max_round=20,
-        speaker_selection_method=state_transition
+        speaker_selection_method=state_transition,
     )
     group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
 
@@ -117,4 +121,4 @@ def context_leaking(
     return chat_result.summary  # type: ignore[no-any-return]
 
 
-app = FastAgency(wf=wf, ui=MesopUI())
+app = FastAgency(provider=wf, ui=MesopUI(), title="Context leak chat")
