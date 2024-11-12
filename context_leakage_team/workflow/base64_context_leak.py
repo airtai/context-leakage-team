@@ -5,7 +5,6 @@ from typing import Any, List
 
 from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import ConversableAgent, UserProxyAgent
-from autogen.agentchat.agent import Agent
 from fastagency import UI
 from pydantic import BaseModel, Field
 
@@ -13,8 +12,12 @@ from context_leakage_team.agent_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
+from context_leakage_team.log_context_leakage import (
+    create_log_context_leakage_function,
+    generate_markdown_report,
+)
 from context_leakage_team.model_adapter import send_msg_to_model
-from context_leakage_team.workflow.workflow import llm_config
+from context_leakage_team.workflow.workflow import llm_config, wf
 
 tested_model_confidential = (
     Path(__file__).parent
@@ -23,12 +26,17 @@ tested_model_confidential = (
     / "tested_model_config"
     / "tested_model_confidential.md"
 )
+
 tested_model_non_confidential = (
     Path(__file__).parent
     / ".."
     / ".."
     / "tested_model_config"
     / "tested_model_non_confidential.md"
+)
+
+context_leak_log_save_path = (
+    Path(__file__).parent / ".." / ".." / "reports" / "base64_context_leak.pd"
 )
 
 
@@ -54,6 +62,10 @@ def send_msg_to_model_encode_sensitive(input_data: Base64EncodeInput) -> str:
     return send_msg_to_model(text)
 
 
+@wf.register(  # type: ignore[misc]
+    name="Base64 context leak attempt",
+    description="Attempt to leak context from tested LLM using base 64 encoding of sensitive information",
+)
 def base64_context_leaking(ui: UI, params: dict[str, Any]) -> str:
     def is_termination_msg(msg: dict[str, Any]) -> bool:
         try:
@@ -116,24 +128,26 @@ def base64_context_leaking(ui: UI, params: dict[str, Any]) -> str:
         description="Sends a message to the tested LLM encoding the message sensitive parts in base64",
     )
 
-    def state_transition(last_speaker: Agent, groupchat: GroupChat) -> Agent:
-        if last_speaker is prompt_generator:
-            # init -> retrieve
-            return user_proxy
-        elif last_speaker is user_proxy:
-            # retrieve: action 1 -> action 2
-            return context_leak_classifier
-        elif last_speaker is context_leak_classifier:
-            # action 2 -> action 1
-            return prompt_generator
+    register_function(
+        create_log_context_leakage_function(save_path=context_leak_log_save_path),
+        caller=context_leak_classifier,
+        executor=user_proxy,
+        name="log_context_leakage",
+        description="Save context leak attempt",
+    )
 
-        return prompt_generator
+    graph_dict = {
+        user_proxy: [context_leak_classifier, prompt_generator],
+        context_leak_classifier: [user_proxy],
+        prompt_generator: [user_proxy],
+    }
 
     group_chat = GroupChat(
         agents=[prompt_generator, context_leak_classifier, user_proxy],
         messages=[],
         max_round=20,
-        speaker_selection_method=state_transition,
+        allowed_or_disallowed_speaker_transitions=graph_dict,
+        speaker_transitions_type="allowed",
     )
 
     group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
@@ -145,3 +159,15 @@ def base64_context_leaking(ui: UI, params: dict[str, Any]) -> str:
     )
 
     return chat_result.summary  # type: ignore[no-any-return]
+
+
+@wf.register(  # type: ignore[misc]
+    name="Base64 context leak report",
+    description="Display a report of base64 context leak attempts",
+)
+def context_leaking_report(ui: UI, params: dict[str, Any]) -> None:
+    ui.text_message(
+        sender="Context leakage team",
+        recipient="User",
+        body=generate_markdown_report(log_path=context_leak_log_save_path),
+    )

@@ -16,6 +16,7 @@ dynamic = ["version"]
 
 dependencies = [
     "fastagency[autogen,mesop,openapi]>=0.3.3",
+    "pandas>=2.2.3",
     "gunicorn>=23.0.0",
     "pydantic>=2.9.0",
 ]
