@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  # nosemgrep: yaml.docker-compose.security.writable-filesystem-service.writable-filesystem-service
+  python-3.10-context_leakage_team:
+    image: mcr.microsoft.com/devcontainers/python:3.10
+    container_name: context_leakage_team-${USER}-python-3.10
+    volumes:
+      - ../:/workspaces/context_leakage_team:cached
+    command: sleep infinity
+
+    env_file:
+      - ./devcontainer.env
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - context_leakage_team-network
+
+networks:
+  context_leakage_team-network:
+    name: context_leakage_team-${USER}-network

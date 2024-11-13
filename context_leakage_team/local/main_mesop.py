@@ -1,12 +1,13 @@
 from fastagency import FastAgency
 from fastagency.ui.mesop import MesopUI
-from workflows import test_wf
+
+from ..workflow import wf
 
 app = FastAgency(
-    provider=test_wf,
+    provider=wf,
     ui=MesopUI(),
-    title="My FastAgency App",
+    title="Context Leakage Team",
 )
 
 # start the fastagency app with the following command
-# gunicorn my_fastagency_app.local.main_mesop:app
+# gunicorn context_leakage_team.local.main_mesop:app

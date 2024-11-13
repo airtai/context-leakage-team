@@ -15,19 +15,28 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 dependencies = [
-    "fastagency[autogen,mesop,opeanapi]>=0.3.3",
+    "fastagency[autogen,mesop,server,fastapi]>=0.3.3",
+    "pandas>=2.2.3",
     "gunicorn>=23.0.0",
     "pydantic>=2.9.0",
 ]
 
 [project.optional-dependencies]
 
+# dev dependencies
 lint = [
-    "mypy==1.11.2",
-    "ruff==0.6.7",
-    "bandit==1.7.9",
-    "semgrep==1.89.0",
+    "types-PyYAML",
+    "types-setuptools",
+    "types-ujson",
+    "types-Pygments",
+    "types-docutils",
+    "mypy==1.12.1",
+    "ruff==0.7.2",
+    "pyupgrade-directories==0.3.0",
+    "bandit==1.7.10",
+    "semgrep==1.95.0",
     "codespell==2.3.0",
+    "pytest-mypy-plugins==3.1.2",
 ]
 
 testing = [
@@ -37,8 +46,7 @@ testing = [
 
 dev = [
     "context-leakage-team[lint,testing]",
-    "pre-commit==3.5.0; python_version < '3.9'",
-    "pre-commit==3.8.0; python_version >= '3.9'",
+    "pre-commit==4.0.1",
     "detect-secrets==1.5.0",
 ]
 
@@ -47,18 +55,28 @@ dev = [
 [tool.hatch.version]
 path = "context_leakage_team/__about__.py"
 
-[tool.hatch.build]
-skip-excluded-dirs = true
-exclude = ["/tests", "/docs"]
+[tool.hatch.build.targets.wheel]
+only-include = ["context_leakage_team"]
+
+[tool.pytest.ini_options]
+filterwarnings =["ignore::DeprecationWarning"]
+asyncio_default_fixture_loop_scope = "function"
+testpaths = [
+    "tests",
+]
 
 [tool.mypy]
-files = ["context_leakage_team"]
+
+files = ["context_leakage_team", "tests"]
+
 strict = true
 python_version = "3.10"
 ignore_missing_imports = true
 install_types = true
 non_interactive = true
-plugins = ["pydantic.mypy"]
+plugins = [
+    "pydantic.mypy",
+]
 
 # from https://blog.wolt.com/engineering/2021/09/30/professional-grade-mypy-configuration/
 disallow_untyped_defs = true
@@ -66,7 +84,7 @@ no_implicit_optional = true
 check_untyped_defs = true
 warn_return_any = true
 show_error_codes = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 
 disallow_incomplete_defs = true
 disallow_untyped_decorators = true
@@ -75,15 +93,8 @@ disallow_any_unimported = false
 [tool.ruff]
 fix = true
 line-length = 88
-target-version = "py38"
-include = [
-    "context_leakage_team/**/*.py",
-    "context_leakage_team/**/*.pyi",
-    "tests/**/*.py",
-    "docs/**/*.py",
-    "pyproject.toml",
-]
-exclude = ["docs/docs_src"]
+include = ["context_leakage_team/**/*.py", "context_leakage_team/**/*.pyi", "pyproject.toml"]
+exclude = []
 
 [tool.ruff.lint]
 select = [
@@ -105,44 +116,12 @@ select = [
     "TCH",   # flake8-type-checking   https://docs.astral.sh/ruff/rules/#flake8-type-checking-tch
     "RUF",   # Ruff-specific rules    https://docs.astral.sh/ruff/rules/#ruff-specific-rules-ruf
     "PERF",  # Perflint               https://docs.astral.sh/ruff/rules/#perflint-perf
-    "UP",    # pyupgrade              https://docs.astral.sh/ruff/rules/#pyupgrade-up
 ]
 
 ignore = [
-    "ASYNC109", # own timeout implementation
-
-    "E501",     # line too long, handled by formatter later
-    "C901",     # too complex
-
-    # todo pep8-naming
-    "N817",     # CamelCase `*` imported as acronym `*`
-    "N815",     # Variable `*` in class scope should not be mixedCase
-    "N803",     # Argument name `expandMessageExamples` should be lowercase
-
-    # todo pydocstyle
-    "D100",     # missing docstring in public module
-    "D101",
-    "D102",
-    "D103",
-    "D104",     # missing docstring in public package
-    "D105",     # missing docstring in magic methods
-    "D106",     # missing docstring in public nested class
-    "D107",     # missing docstring in __init__
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = [
-    "D101",    # docstrings
-    "D102",
-    "D103",
-    "PLR2004", # magic-value-comparison
-    "S101",    # use assert
-]
-
-"docs/*.py" = [
-    "D101", # docstrings
-    "D102",
-    "D103",
+    "E501",  # line too long, handled by formatter later
+    "D100", "D101", "D102", "D103", "D104",
+#     "C901",  # too complex
 ]
 
 [tool.ruff.lint.isort]
@@ -155,48 +134,13 @@ docstring-code-format = true
 convention = "google"
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = []
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-q -m 'not slow'"
-testpaths = ["tests"]
-markers = ["slow", "all"]
-asyncio_default_fixture_loop_scope = "function"
-
-[tool.coverage.run]
-parallel = true
-branch = true
-concurrency = ["multiprocessing", "thread"]
-source = ["docs/docs_src", "examples", "context_leakage_team", "tests"]
-context = '${CONTEXT}'
-omit = ["**/__init__.py", "tests/mypy/*"]
-
-[tool.coverage.report]
-show_missing = true
-skip_empty = true
-exclude_also = [
-    "if __name__ == .__main__.:",
-    "self.logger",
-    "def __repr__",
-    "lambda: None",
-    "from .*",
-    "import .*",
-    '@(abc\.)?abstractmethod',
-    "raise NotImplementedError",
-    'raise AssertionError',
-    'logger\..*',
-    "pass",
-    '\.\.\.',
-]
-omit = [
-    '*/__about__.py',
-    '*/__main__.py',
-    '*/__init__.py',
-]
 
 [tool.bandit]
 
+[tool.black]
+
+line-length = 88
+
 [tool.codespell]
-skip = "./venv*,./docs/site/*,./htmlcov, ./tested_model_config/*"
+skip = "./venv*, ./reports/*"
 ignore-words = ".codespell-whitelist.txt"

@@ -33,7 +33,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def low_level(messages: Messages, token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
     if token != config.ACC_API_KEY:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    
+
     resp = await process_messages(messages=messages.model_dump(), lvl_config=low)
 
     return resp
@@ -42,7 +42,7 @@ async def low_level(messages: Messages, token: Annotated[str, Depends(oauth2_sch
 async def medium_level(messages: Messages, token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
     if token != config.ACC_API_KEY:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    
+
     resp = await process_messages(messages=messages.model_dump(), lvl_config=medium)
 
     return resp
@@ -51,7 +51,7 @@ async def medium_level(messages: Messages, token: Annotated[str, Depends(oauth2_
 async def high_level(messages: Messages, token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
     if token != config.ACC_API_KEY:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    
+
     resp = await process_messages(messages=messages.model_dump(), lvl_config=high)
 
     return resp

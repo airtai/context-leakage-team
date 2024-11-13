@@ -1,11 +1,13 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+
+echo "Running pyup_dirs..."
+pyup_dirs --py39-plus --recursive context_leakage_team tests
 
 echo "Running ruff linter (isort, flake, pyupgrade, etc. replacement)..."
-ruff check --exit-non-zero-on-fix
+ruff check
 
 echo "Running ruff formatter (black replacement)..."
 ruff format
 
 echo "Running codespell to find typos..."
-codespell
+codespell --skip="./playwright-report"

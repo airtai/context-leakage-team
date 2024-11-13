@@ -1,36 +1,7 @@
-import json
-from pathlib import Path
+from os import environ
 from typing import Annotated
 
 import requests
-from pydantic import BaseModel
-
-
-class Config(BaseModel):
-    url: str
-    token: str
-
-
-CONFIG_PATH = (
-    Path(__file__).parent
-    / ".."
-    / "tested_model_config"
-    / "tested_model_api_config.json"
-)
-
-config_cache = None
-
-
-def load_config(config_path: Path = CONFIG_PATH) -> Config:
-    global config_cache
-    if config_cache is None:
-        with config_path.open() as file:
-            config_data = json.load(file)
-        config_cache = Config(**config_data)
-    return config_cache
-
-
-config = load_config(CONFIG_PATH)
 
 
 def send_msg_to_model(
@@ -49,18 +20,17 @@ def send_msg_to_model(
         ValueError: If the URL or token is not provided in the config.
         requests.exceptions.HTTPError: If the HTTP request returned an unsuccessful status code.
     """
-    config = load_config()
-    url = config.url
-    token = config.token
+    url = environ.get("TESTED_MODEL_URL", "")
+    token = environ.get("TESTED_MODEL_TOKEN", "")
 
     if not url or not token:
-        raise ValueError("URL and token must be provided in the config file.")
+        raise ValueError("URL and token must be in environment variables")
 
     headers = {"Authorization": f"Bearer {token}", "Content-type": "application/json"}
 
     data = {"messages": [{"role": "user", "content": msg}]}
 
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data, timeout=30)
     response.raise_for_status()  # Ensure we raise an error for bad responses
     model_response = response.json().get("content")
     if not model_response:
