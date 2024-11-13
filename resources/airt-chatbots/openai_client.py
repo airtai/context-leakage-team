@@ -25,11 +25,11 @@ class AzureClientWrapper(AsyncContextDecorator):
     def __init__(self, queue) -> None:
         self.azure_client = None
         self.queue: Queue = queue
-    
+
     async def __aenter__(self):
         self.azure_client = await self.queue.get()
         return self.azure_client
-    
+
     async def __aexit__(self, *exc):
         await self.queue.put(self.azure_client)
         return True
@@ -53,7 +53,7 @@ class GPTRobin:
         for _ in range(batch_size):
             for c in clients:
                 self.client_queue.put_nowait(c)
-                
+
 
     def get_azure_client(self) -> AsyncAzureOpenAI:
         return AzureClientWrapper(self.client_queue)
