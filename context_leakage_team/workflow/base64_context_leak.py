@@ -12,11 +12,11 @@ from context_leakage_team.agent_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
-from context_leakage_team.log_context_leakage import (
+from context_leakage_team.tools.log_context_leakage import (
     create_log_context_leakage_function,
     generate_markdown_report,
 )
-from context_leakage_team.model_adapter import send_msg_to_model
+from context_leakage_team.tools.model_adapter import send_msg_to_model
 from context_leakage_team.workflow.workflow import llm_config, wf
 
 tested_model_confidential = (
