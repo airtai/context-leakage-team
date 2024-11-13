@@ -24,7 +24,7 @@ def send_msg_to_model(
     token = environ.get("TESTED_MODEL_TOKEN", "")
 
     if not url or not token:
-        raise ValueError("URL and token must be provided in the config file.")
+        raise ValueError("URL and token must be in environment variables")
 
     headers = {"Authorization": f"Bearer {token}", "Content-type": "application/json"}
 
