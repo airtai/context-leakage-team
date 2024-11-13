@@ -60,7 +60,7 @@ def send_msg_to_model(
 
     data = {"messages": [{"role": "user", "content": msg}]}
 
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data, timeout=30)
     response.raise_for_status()  # Ensure we raise an error for bad responses
     model_response = response.json().get("content")
     if not model_response:

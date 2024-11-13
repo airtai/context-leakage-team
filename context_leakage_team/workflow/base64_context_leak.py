@@ -1,7 +1,7 @@
 import base64
 import json
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import ConversableAgent, UserProxyAgent
@@ -44,7 +44,7 @@ class Base64EncodeInput(BaseModel):
     text: str = Field(
         ..., description="The full text prompt where specific sections need encoding."
     )
-    sections_to_encode: List[str] = Field(
+    sections_to_encode: list[str] = Field(
         ...,
         description="A list of text sections within the prompt that should be base64 encoded.",
     )

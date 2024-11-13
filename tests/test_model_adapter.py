@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 import requests
@@ -11,13 +11,13 @@ from context_leakage_team.model_adapter import Config
 
 # Fixture to mock config file loading
 @pytest.fixture
-def _mock_config(monkeypatch):
+def _mock_config(monkeypatch: pytest.MonkeyPatch) -> None:
     # This simulates the config that would be loaded from config.json
     mock_config_data = Config(
         **{"url": "https://mock-api-url.com/generate", "token": "MOCK_API_KEY"}
     )
 
-    def mock_load_config():
+    def mock_load_config() -> Config:
         return mock_config_data
 
     monkeypatch.setattr(
@@ -28,7 +28,7 @@ def _mock_config(monkeypatch):
 # Test case for a successful API call
 @pytest.mark.usefixtures("_mock_config")
 @patch("requests.post")
-def test_send_msg_success(mock_post):
+def test_send_msg_success(mock_post: MagicMock) -> None:
     mock_response = {"content": "This is a mock response from the model."}
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -46,7 +46,7 @@ def test_send_msg_success(mock_post):
 # Test case for API response missing 'response' field
 @pytest.mark.usefixtures("_mock_config")
 @patch("requests.post")
-def test_send_msg_no_response_field(mock_post):
+def test_send_msg_no_response_field(mock_post: MagicMock) -> None:
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {}
 
@@ -60,7 +60,7 @@ def test_send_msg_no_response_field(mock_post):
 # Test case for connection error handling
 @pytest.mark.usefixtures("_mock_config")
 @patch("requests.post")
-def test_send_msg_connection_error(mock_post):
+def test_send_msg_connection_error(mock_post: MagicMock) -> None:
     # Simulate a connection error
     mock_post.side_effect = requests.exceptions.RequestException("Connection error")
 
