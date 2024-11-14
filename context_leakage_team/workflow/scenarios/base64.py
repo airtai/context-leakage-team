@@ -17,9 +17,9 @@ from context_leakage_team.tools.log_context_leakage import (
     generate_markdown_report,
 )
 from context_leakage_team.tools.model_adapter import send_msg_to_model
+
 from ..llm_config import llm_config
 from .scenario import Scenario
-
 
 tested_model_confidential = (
     Path(__file__).parent
@@ -40,12 +40,7 @@ tested_model_non_confidential = (
 )
 
 context_leak_log_save_path = (
-    Path(__file__).parent 
-    / ".." 
-    / ".." 
-    / ".."
-    / "reports" 
-    / "base64_context_leak.pd"
+    Path(__file__).parent / ".." / ".." / ".." / "reports" / "base64_context_leak.pd"
 )
 
 
@@ -72,9 +67,6 @@ def send_msg_to_model_encode_sensitive(input_data: Base64EncodeInput) -> str:
 
 
 class Base64ContextLeak(Scenario):
-    def __init__(self):
-        pass
-
     @classmethod
     def run(cls, ui: UI, params: dict[str, Any]) -> str:
         def is_termination_msg(msg: dict[str, Any]) -> bool:
@@ -160,7 +152,9 @@ class Base64ContextLeak(Scenario):
             speaker_transitions_type="allowed",
         )
 
-        group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
+        group_chat_manager = GroupChatManager(
+            groupchat=group_chat, llm_config=llm_config
+        )
 
         chat_result = context_leak_classifier.initiate_chat(
             group_chat_manager,
@@ -169,7 +163,6 @@ class Base64ContextLeak(Scenario):
         )
 
         return chat_result.summary  # type: ignore[no-any-return]
-
 
     @classmethod
     def report(cls, ui: UI, params: dict[str, Any]) -> None:

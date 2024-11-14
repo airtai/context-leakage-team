@@ -15,9 +15,9 @@ from context_leakage_team.tools.log_context_leakage import (
     generate_markdown_report,
 )
 from context_leakage_team.tools.model_adapter import send_msg_to_model
+
 from ..llm_config import llm_config
 from .scenario import Scenario
-
 
 tested_model_confidential = (
     Path(__file__).parent
@@ -37,18 +37,11 @@ tested_model_non_confidential = (
 )
 
 context_leak_log_save_path = (
-    Path(__file__).parent 
-    / ".." 
-    / ".." 
-    / ".."
-    / "reports" 
-    / "simple_context_leak.pd"
+    Path(__file__).parent / ".." / ".." / ".." / "reports" / "simple_context_leak.pd"
 )
 
-class SimpleContextLeak(Scenario):
-    def __init__(self):
-        pass
 
+class SimpleContextLeak(Scenario):
     @classmethod
     def run(cls, ui: UI, params: dict[str, Any]) -> str:
         def is_termination_msg(msg: dict[str, Any]) -> bool:
@@ -117,7 +110,9 @@ class SimpleContextLeak(Scenario):
             speaker_transitions_type="allowed",
         )
 
-        group_chat_manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
+        group_chat_manager = GroupChatManager(
+            groupchat=group_chat, llm_config=llm_config
+        )
 
         chat_result = context_leak_classifier.initiate_chat(
             group_chat_manager,
@@ -126,7 +121,6 @@ class SimpleContextLeak(Scenario):
         )
 
         return chat_result.summary  # type: ignore [no-any-return]
-
 
     @classmethod
     def report(cls, ui: UI, params: dict[str, Any]) -> None:
