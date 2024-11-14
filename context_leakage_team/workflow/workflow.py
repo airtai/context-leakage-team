@@ -9,7 +9,7 @@ from .scenarios.scenario import Scenario
 wf = AutoGenWorkflows()
 
 context_leak_scenarios: dict[str, Scenario] = {
-    name: getattr(scenarios, name) for name in scenarios.__all__
+    name: getattr(scenarios, name)() for name in scenarios.__all__
 }
 
 
