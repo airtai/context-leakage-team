@@ -32,10 +32,9 @@ def context_leak_chat(ui: UI, params: dict[str, Any]) -> str:
     description="Report on the context leak attempt.",
 )
 def context_leak_report(ui: UI, params: dict[str, Any]) -> None:
-    context_leak_scenario = ui.multiple_choice(
-        sender="Context leakage team",
-        prompt="Please select the type of context leakage you would like to report on.",
-        choices=list(context_leak_scenarios),
-    )
-
-    context_leak_scenarios[context_leak_scenario].report(ui, params)
+    for scenario in context_leak_scenarios:
+        ui.text_message(
+            sender="Context leakage team",
+            body=f"Scenario: {scenario}",
+        )
+        context_leak_scenarios[scenario].report(ui, params)
