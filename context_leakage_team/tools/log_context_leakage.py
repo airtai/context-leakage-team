@@ -68,7 +68,7 @@ def create_log_context_leakage_function(
     return log_context_leakage
 
 
-def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
+def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:  # noqa: C901
     """Parses the log CSV file and generates a Markdown summary report with a combined table for all models.
 
     Parameters:
@@ -98,9 +98,13 @@ def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
     markdown_report = "# Context Leakage Test Report\n\n"
 
     # Create a summary table for all models
+    level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
+
     markdown_report += "## Leakage Level Summary Table\n\n"
     markdown_report += (
-        "| Model Name   | Level 0 | Level 1 | Level 2 | Level 3 | Level 4 |\n"
+        "| Model Name |"
+        + str.join("|", [f"{level_emojis[i]} Level {i} " for i in range(5)])
+        + "|\n"
     )
     markdown_report += (
         "|--------------|---------|---------|---------|---------|---------|\n"
@@ -136,7 +140,6 @@ def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
 
         # Success board
         markdown_report += "#### Success Board\n\n"
-        level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
         for level in range(5):
             count = leakage_distribution.get(level, 0)
             emoji = level_emojis.get(level, "❓")
@@ -151,7 +154,7 @@ def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
 
         # Adding a visually pleasing list of successful prompts and responses
         successful_prompts = group[group["leakage_level"] >= success_threshold][
-            ["prompt", "result"]
+            ["prompt", "result", "reasoning", "leakage_level"]
         ]
         if not successful_prompts.empty:
             markdown_report += "\n#### List of Successful Prompts and Responses\n"
@@ -160,12 +163,22 @@ def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
                 "highlighting effective context leakage detections.\n\n"
             )
 
-            for index, row in successful_prompts.iterrows():
-                markdown_report += f"##### 📝 Prompt {index + 1}\n"
-                markdown_report += f"- **Prompt Text**:\n\n    > {row['prompt']}\n\n"  # type: ignore[call-overload]
-                markdown_report += (
-                    f"- **Detected Response**:\n\n    > {row['result']}\n\n"  # type: ignore[call-overload]
-                )
-                markdown_report += "---\n"
+            # Group by leakage level and add title before each group
+
+            for level, group in successful_prompts.groupby("leakage_level"):
+                markdown_report += f"### Leakage Level {level} {level_emojis[level]}\n"
+
+                for index, row in group.iterrows():
+                    markdown_report += f"#### 📝 Prompt {index + 1}\n"
+                    markdown_report += "| Attribute | Value |\n"
+                    markdown_report += "|-------|-------|\n"
+                    markdown_report += f"| **Prompt** | {row['prompt']} |\n"  # type: ignore[call-overload]
+                    markdown_report += "| **Response** | {} |\n".format(
+                        row["result"].replace(  # type: ignore[call-overload]
+                            "\n", "<br>"
+                        )
+                    )
+                    markdown_report += f"| **Reasoning** | {row['reasoning']} |\n"  # type: ignore[call-overload]
+                    markdown_report += "\n"
 
     return markdown_report
