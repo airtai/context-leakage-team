@@ -105,9 +105,10 @@ class Scenario(ABC):
         self, ui: UI, messages: list[dict[str, Any]], agent: Agent, action: str
     ) -> Agent | None:
         if "tool_calls" not in messages[-1] and len(messages) > 1:
-            ui.system_message(
+            ui.text_message(
                 sender="Context leakage team",
-                message=f"Please call the function to {action}.",
+                recipient=agent.name,
+                body=f"Please call the function to {action}.",
             )
             return agent
         return None
