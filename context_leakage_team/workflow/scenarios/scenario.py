@@ -3,9 +3,8 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from os import environ
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-import autogen
 from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import Agent, ConversableAgent, UserProxyAgent
 from fastagency import UI
@@ -26,7 +25,7 @@ DEFAULT_LOG_PATH = (
     Path(__file__).parent / ".." / ".." / ".." / "reports" / "default_report.pd"
 )
 
-tested_model_confidential = (
+TESTED_MODEL_CONFIDENTIAL_PATH = (
     Path(__file__).parent
     / ".."
     / ".."
@@ -35,7 +34,7 @@ tested_model_confidential = (
     / "tested_model_confidential.md"
 )
 
-tested_model_non_confidential = (
+TESTED_MODEL_NON_CONFIDENTIAL_PATH = (
     Path(__file__).parent
     / ".."
     / ".."
@@ -58,7 +57,60 @@ class Scenario(ABC):
 
     @abstractmethod
     def get_initial_message(self) -> str:
+        """Abstract method to define the initial message."""
         pass
+
+    def _create_custom_speaker_selection_func(
+        self,
+        prompt_generator: Agent,
+        context_leak_classifier: Agent,
+        user_proxy: Agent,
+        ui: UI,
+    ) -> Callable[[Agent, GroupChat], Agent]:
+        def custom_speaker_selection(
+            last_speaker: Agent, groupchat: GroupChat
+        ) -> Agent:
+            messages = groupchat.messages
+            if last_speaker is prompt_generator:
+                return (
+                    self._validate_tool_call(
+                        ui, messages, prompt_generator, "send a message to the model"
+                    )
+                    or user_proxy
+                )
+
+            if last_speaker is context_leak_classifier:
+                return (
+                    self._validate_tool_call(
+                        ui,
+                        messages,
+                        context_leak_classifier,
+                        "classify the context leakage",
+                    )
+                    or user_proxy
+                )
+
+            if last_speaker is user_proxy:
+                prev_speaker = messages[-2]["name"]
+                if prev_speaker == "Prompt_Generator_Agent":
+                    return context_leak_classifier
+                elif prev_speaker == "Context_Leak_Classifier_Agent":
+                    return prompt_generator
+
+            return prompt_generator
+
+        return custom_speaker_selection
+
+    def _validate_tool_call(
+        self, ui: UI, messages: list[dict[str, Any]], agent: Agent, action: str
+    ) -> Agent | None:
+        if "tool_calls" not in messages[-1] and len(messages) > 1:
+            ui.system_message(
+                sender="Context leakage team",
+                message=f"Please call the function to {action}.",
+            )
+            return agent
+        return None
 
     def setup_group_chat(
         self,
@@ -68,39 +120,9 @@ class Scenario(ABC):
         user_proxy: Agent,
         llm_config: dict[str, Any],
     ) -> GroupChatManager:
-        def custom_speaker_selection_func(
-            last_speaker: Agent, groupchat: autogen.GroupChat
-        ) -> Agent:
-            messages = groupchat.messages
-
-            if last_speaker is prompt_generator:
-                # Prompt generator must call the function to send a message to the model
-                if "tool_calls" not in messages[-1] and len(messages) > 1:
-                    ui.system_message(
-                        sender="Context leakage team",
-                        message="Please call the function to send a message to the model.",
-                    )
-                    return prompt_generator
-                else:
-                    return user_proxy
-
-            if last_speaker is context_leak_classifier:
-                if "tool_calls" not in messages[-1] and len(messages) > 1:
-                    ui.system_message(
-                        sender="Context leakage team",
-                        message="Please call the function to classify the context leakage.",
-                    )
-                    return context_leak_classifier
-                else:
-                    return user_proxy
-
-            if last_speaker is user_proxy:
-                if messages[-2]["name"] == "Prompt_Generator_Agent":
-                    return context_leak_classifier
-                elif messages[-2]["name"] == "Context_Leak_Classifier_Agent":
-                    return prompt_generator
-
-            return prompt_generator
+        custom_speaker_selection_func = self._create_custom_speaker_selection_func(
+            prompt_generator, context_leak_classifier, user_proxy, ui
+        )
 
         group_chat = GroupChat(
             agents=[prompt_generator, context_leak_classifier, user_proxy],
@@ -175,25 +197,20 @@ class Scenario(ABC):
     def run(self, ui: UI, params: dict[str, Any]) -> str:
         """Run the scenario with provided UI and parameters."""
         initial_message = self.get_initial_message()
-
         model_level = ui.multiple_choice(
             sender="Context leakage team",
             prompt="What model would you like to test?",
             choices=["low", "medium", "high"],
         )
-
         function_to_register = self.get_function_to_register(model_level=model_level)
+
         self.counter = 0
+        confidential_text = TESTED_MODEL_CONFIDENTIAL_PATH.read_text()
+        non_confidential_text = TESTED_MODEL_NON_CONFIDENTIAL_PATH.read_text()
 
-        # Shared configuration and agent setup
-        confidential_text = tested_model_confidential.read_text()
-        non_confidential_text = tested_model_non_confidential.read_text()
-
-        # Create agents
         prompt_generator, context_leak_classifier, user_proxy = self.create_agents(
             llm_config, confidential_text, non_confidential_text
         )
-
         self.max_round = self.get_max_round(ui)
 
         @functools.wraps(function_to_register.function)
@@ -201,7 +218,6 @@ class Scenario(ABC):
             self.counter += 1
             return function_to_register.function(*args, **kwargs)
 
-        # Register function based on the scenario
         register_function(
             function_call_counter,
             caller=prompt_generator,
@@ -209,12 +225,9 @@ class Scenario(ABC):
             name=function_to_register.name,
             description=function_to_register.description,
         )
-
-        # Register the logging function
         register_function(
             create_log_context_leakage_function(
-                save_path=self.context_leak_log_save_path,
-                model_name=model_level,
+                save_path=self.context_leak_log_save_path, model_name=model_level
             ),
             caller=context_leak_classifier,
             executor=user_proxy,
@@ -222,11 +235,9 @@ class Scenario(ABC):
             description="Save context leak attempt",
         )
 
-        # Set up and initiate group chat
         group_chat_manager = self.setup_group_chat(
             ui, prompt_generator, context_leak_classifier, user_proxy, llm_config
         )
-
         chat_result = context_leak_classifier.initiate_chat(
             group_chat_manager,
             message=initial_message,
@@ -236,7 +247,7 @@ class Scenario(ABC):
         return chat_result.summary  # type: ignore [no-any-return]
 
     def report(self, ui: UI, params: dict[str, Any]) -> None:
-        """Default report method; same for all subclasses."""
+        """Generate a report for the scenario."""
         ui.text_message(
             sender="Context leakage team",
             recipient="User",
