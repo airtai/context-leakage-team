@@ -34,7 +34,6 @@ def test_send_msg_no_response_field(mock_post: MagicMock) -> None:
 
 
 # Test case for connection error handling
-@pytest.mark.usefixtures("set_env_vars")
 @patch("requests.post")
 def test_send_msg_connection_error(mock_post: MagicMock) -> None:
     # Simulate a connection error
