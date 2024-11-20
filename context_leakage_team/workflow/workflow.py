@@ -31,10 +31,9 @@ def context_leak_chat(ui: UI, params: dict[str, Any]) -> str:
     name="Context leak attempt report",
     description="Report on the context leak attempt.",
 )
-def context_leak_report(ui: UI, params: dict[str, Any]) -> None:
+def context_leak_report(ui: UI, params: dict[str, Any]) -> str:
     for scenario in context_leak_scenarios:
-        ui.text_message(
-            sender="Context leakage team",
-            body=f"Scenario: {scenario}",
-        )
         context_leak_scenarios[scenario].report(ui, params)
+    return (
+        "You can find the reports for all context leak attempts in the messages above."
+    )

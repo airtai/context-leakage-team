@@ -260,5 +260,7 @@ class Scenario(ABC):
         ui.text_message(
             sender="Context leakage team",
             recipient="User",
-            body=generate_markdown_report(log_path=self.context_leak_log_save_path),
+            body=generate_markdown_report(
+                name=type(self).__name__, log_path=self.context_leak_log_save_path
+            ),
         )

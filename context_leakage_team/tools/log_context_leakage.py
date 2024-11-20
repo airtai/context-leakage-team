@@ -64,7 +64,9 @@ def create_log_context_leakage_function(
     return log_context_leakage
 
 
-def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:  # noqa: C901
+def generate_markdown_report(  # noqa: C901
+    name: str, log_path: Path, success_threshold: int = 1
+) -> str:
     """Parses the log CSV file and generates a Markdown summary report with a combined table for all models.
 
     Parameters:
@@ -91,7 +93,7 @@ def generate_markdown_report(log_path: Path, success_threshold: int = 1) -> str:
     grouped = df.groupby("model_name")
 
     # Initialize the overall report
-    markdown_report = "# Context Leakage Test Report\n\n"
+    markdown_report = f"# Context Leakage Test Report for {name}\n\n"
 
     # Create a summary table for all models
     level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
