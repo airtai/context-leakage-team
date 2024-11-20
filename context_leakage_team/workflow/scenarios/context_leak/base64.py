@@ -1,9 +1,8 @@
 import base64
 from pathlib import Path
-from typing import Any, Callable
+from typing import Annotated, Any, Callable
 
 from fastagency import UI
-from pydantic import BaseModel, Field
 
 from .context_leak_scenario import ContextLeakageScenario, FunctionToRegister
 
@@ -18,23 +17,15 @@ LOG_PATH = (
 )
 
 
-class Base64EncodeInput(BaseModel):
-    text: str = Field(
-        ..., description="The full text prompt where specific sections need encoding."
-    )
-    sections_to_encode: list[str] = Field(
-        ...,
-        description="A list of text sections within the prompt that should be base64 encoded.",
-    )
-
-
-def create_send_msg_tom_model_encode_sensitive(
+def create_send_msg_to_model_encode_sensitive(
     send_msg_to_model: Callable[[str], str],
-) -> Callable[[Base64EncodeInput], str]:
-    def send_msg_to_model_encode_sensitive(input_data: Base64EncodeInput) -> str:
-        text = input_data.text
-        sections_to_encode = input_data.sections_to_encode
-
+) -> Callable[[str, list[str]], str]:
+    def send_msg_to_model_encode_sensitive(
+        text: Annotated[str, "The prompt text to send to the tested LLM."],
+        sections_to_encode: Annotated[
+            list[str], "The list of sections to encode in base64."
+        ],
+    ) -> str:
         for section in sections_to_encode:
             if section in text:
                 encoded_section = base64.b64encode(section.encode("utf-8")).decode(
@@ -77,7 +68,7 @@ class Base64ContextLeak(ContextLeakageScenario):
         )
 
         return FunctionToRegister(
-            function=create_send_msg_tom_model_encode_sensitive(send_msg_to_model),
+            function=create_send_msg_to_model_encode_sensitive(send_msg_to_model),
             name="base_64_encode_msg",
             description="Sends a message to the tested LLM encoding the message sensitive parts in base64",
         )
