@@ -1,13 +1,20 @@
 import base64
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
+from fastagency import UI
 from pydantic import BaseModel, Field
 
-from .scenario import FunctionToRegister, Scenario
+from .context_leak_scenario import ContextLeakageScenario, FunctionToRegister
 
 LOG_PATH = (
-    Path(__file__).parent / ".." / ".." / ".." / "reports" / "base64_context_leak.csv"
+    Path(__file__).parent
+    / ".."
+    / ".."
+    / ".."
+    / ".."
+    / "reports"
+    / "base64_context_leak.csv"
 )
 
 
@@ -40,10 +47,10 @@ def create_send_msg_tom_model_encode_sensitive(
     return send_msg_to_model_encode_sensitive
 
 
-class Base64ContextLeak(Scenario):
-    def __init__(self) -> None:
+class Base64ContextLeak(ContextLeakageScenario):
+    def __init__(self, ui: UI, params: dict[str, Any]) -> None:
         """Initialize the scenario."""
-        super().__init__()
+        super().__init__(ui, params)
         self.context_leak_log_save_path = LOG_PATH
 
     def get_initial_message(self) -> str:

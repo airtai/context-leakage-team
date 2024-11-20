@@ -3,13 +3,13 @@ from typing import Any
 from fastagency import UI
 from fastagency.runtimes.autogen import AutoGenWorkflows
 
-from . import scenarios
-from .scenarios.scenario import Scenario
+from .scenarios import context_leak
+from .scenarios.scenario_template import ScenarioTemplate
 
 wf = AutoGenWorkflows()
 
-context_leak_scenarios: dict[str, Scenario] = {
-    name: getattr(scenarios, name)() for name in scenarios.__all__
+context_leak_scenarios: dict[str, type[ScenarioTemplate]] = {
+    name: getattr(context_leak, name) for name in context_leak.__all__
 }
 
 
@@ -24,7 +24,7 @@ def context_leak_chat(ui: UI, params: dict[str, Any]) -> str:
         choices=list(context_leak_scenarios),
     )
 
-    return context_leak_scenarios[context_leak_scenario].run(ui, params)
+    return context_leak_scenarios[context_leak_scenario](ui, params).run()
 
 
 @wf.register(  # type: ignore[misc]
@@ -33,7 +33,7 @@ def context_leak_chat(ui: UI, params: dict[str, Any]) -> str:
 )
 def context_leak_report(ui: UI, params: dict[str, Any]) -> str:
     for scenario in context_leak_scenarios:
-        context_leak_scenarios[scenario].report(ui, params)
+        context_leak_scenarios[scenario](ui, params).report()
     return (
         "You can find the reports for all context leak attempts in the messages above."
     )
