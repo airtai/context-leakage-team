@@ -1,6 +1,6 @@
 import base64
 from pathlib import Path
-from typing import Annotated, Any, Callable
+from typing import Annotated, Any, Callable, List
 
 from fastagency import UI
 
@@ -19,11 +19,11 @@ LOG_PATH = (
 
 def create_send_msg_to_model_encode_sensitive(
     send_msg_to_model: Callable[[str], str],
-) -> Callable[[str, list[str]], str]:
+) -> Callable[[str, List[str]], str]:
     def send_msg_to_model_encode_sensitive(
         text: Annotated[str, "The prompt text to send to the tested LLM."],
         sections_to_encode: Annotated[
-            list[str], "The list of sections to encode in base64."
+            List[str], "The list of sections to encode in base64."
         ],
     ) -> str:
         for section in sections_to_encode:

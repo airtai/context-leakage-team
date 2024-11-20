@@ -64,10 +64,13 @@ class ContextLeakageScenario(ScenarioTemplate):
         super().__init__(ui, params)
         self.context_leak_log_save_path = self.DEFAULT_LOG_PATH
         self.counter = 0
-        self.max_round = 20
 
-    def setup_environment(self) -> None:
-        """Set up environment variables and paths."""
+        self.model_level = self.ui.multiple_choice(
+            sender="Context leakage team",
+            prompt="What model would you like to test?",
+            choices=["low", "medium", "high"],
+        )
+
         self.max_round = int(
             self.ui.multiple_choice(
                 sender="Context leakage team",
@@ -75,6 +78,9 @@ class ContextLeakageScenario(ScenarioTemplate):
                 choices=["1", "5", "20", "50", "100"],
             )
         )
+
+    def setup_environment(self) -> None:
+        pass
 
     def setup_agents(self) -> Iterable[Agent]:
         """Create agents specific to context leakage."""
@@ -157,12 +163,10 @@ class ContextLeakageScenario(ScenarioTemplate):
     def execute_scenario(self, group_chat_manager: GroupChatManager) -> str:
         """Run the main scenario logic."""
         initial_message = self.params.get("initial_message", "Start the test.")
-        model_level = self.ui.multiple_choice(
-            sender="Context leakage team",
-            prompt="What model would you like to test?",
-            choices=["low", "medium", "high"],
+
+        function_to_register = self.get_function_to_register(
+            model_level=self.model_level
         )
-        function_to_register = self.get_function_to_register(model_level=model_level)
 
         self.counter = 0
 
@@ -175,7 +179,7 @@ class ContextLeakageScenario(ScenarioTemplate):
         )
 
         log_context_leakage = create_log_context_leakage_function(
-            save_path=self.context_leak_log_save_path, model_name=model_level
+            save_path=self.context_leak_log_save_path, model_name=self.model_level
         )
 
         @functools.wraps(log_context_leakage)
