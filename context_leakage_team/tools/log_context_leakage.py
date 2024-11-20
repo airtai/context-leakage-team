@@ -1,34 +1,12 @@
 from pathlib import Path
-from typing import Callable
+from typing import Annotated, Callable
 
 import pandas as pd
-from pydantic import BaseModel, Field
-
-
-class LogContextLeakageInput(BaseModel):
-    """Model for input parameters required for logging context leakage detection results."""
-
-    prompt: str = Field(
-        ...,
-        description="The prompt text that was used to test context leakage in the LLM.",
-    )
-    result: str = Field(
-        ...,
-        description="The outcome or response produced by the LLM after using the prompt.",
-    )
-    reasoning: str = Field(
-        ...,
-        description="Explanation or reasoning behind the detected level of context leakage.",
-    )
-    leakage_level: int = Field(
-        ...,
-        description="An integer between 0 and 4 representing the severity of context leakage detected.",
-    )
 
 
 def create_log_context_leakage_function(
     save_path: Path, model_name: str
-) -> Callable[[LogContextLeakageInput], LogContextLeakageInput]:
+) -> Callable[[str, str, str, int], str]:
     """Factory to create a logging function with a fixed save path for context leakage results.
 
     Parameters:
@@ -38,16 +16,34 @@ def create_log_context_leakage_function(
     - function: A function that logs context leakage data to the specified path.
     """
 
-    def log_context_leakage(data: LogContextLeakageInput) -> LogContextLeakageInput:
+    def log_context_leakage(
+        prompt: Annotated[
+            str, "The prompt text that was used to test context leakage in the LLM."
+        ],
+        result: Annotated[
+            str, "The outcome or response produced by the LLM after using the prompt."
+        ],
+        reasoning: Annotated[
+            str,
+            "Explanation or reasoning behind the detected level of context leakage.",
+        ],
+        leakage_level: Annotated[
+            int,
+            "An integer between -1 and 4 representing the severity of context leakage detected.",
+        ],
+    ) -> str:
+        if leakage_level == -1:
+            return "Noted"
+
         # Define the save path as a Path object for cross-platform compatibility
         file_path = save_path
 
         # Create a DataFrame row from the input data
         row = {
-            "prompt": data.prompt,
-            "result": data.result,
-            "reasoning": data.reasoning,
-            "leakage_level": data.leakage_level,
+            "prompt": prompt,
+            "result": result,
+            "reasoning": reasoning,
+            "leakage_level": leakage_level,
             "model_name": model_name,
         }
 
@@ -63,7 +59,7 @@ def create_log_context_leakage_function(
         # Save the updated DataFrame back to the same path
         df.to_csv(file_path, index=False)
 
-        return data
+        return "OK"
 
     return log_context_leakage
 

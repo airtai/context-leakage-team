@@ -1,6 +1,6 @@
 import functools
 from abc import ABC, abstractmethod
-from collections import namedtuple
+from dataclasses import dataclass
 from os import environ
 from pathlib import Path
 from typing import Any, Callable
@@ -43,9 +43,12 @@ TESTED_MODEL_NON_CONFIDENTIAL_PATH = (
     / "tested_model_non_confidential.md"
 )
 
-FunctionToRegister = namedtuple(
-    "FunctionToRegister", ["function", "name", "description"]
-)
+
+@dataclass
+class FunctionToRegister:
+    function: Callable[..., Any]
+    name: str
+    description: str
 
 
 class Scenario(ABC):
@@ -214,22 +217,27 @@ class Scenario(ABC):
         )
         self.max_round = self.get_max_round(ui)
 
-        @functools.wraps(function_to_register.function)
-        def function_call_counter(*args: Any, **kwargs: dict[str, Any]) -> Any:
-            self.counter += 1
-            return function_to_register.function(*args, **kwargs)
-
         register_function(
-            function_call_counter,
+            function_to_register.function,
             caller=prompt_generator,
             executor=user_proxy,
             name=function_to_register.name,
             description=function_to_register.description,
         )
+
+        log_context_leakage = create_log_context_leakage_function(
+            save_path=self.context_leak_log_save_path, model_name=model_level
+        )
+
+        @functools.wraps(log_context_leakage)
+        def function_call_counter(*args: Any, **kwargs: dict[str, Any]) -> Any:
+            retval = log_context_leakage(*args, **kwargs)
+            if retval == "OK":
+                self.counter += 1
+            return retval
+
         register_function(
-            create_log_context_leakage_function(
-                save_path=self.context_leak_log_save_path, model_name=model_level
-            ),
+            function_call_counter,
             caller=context_leak_classifier,
             executor=user_proxy,
             name="log_context_leakage",
