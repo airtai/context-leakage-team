@@ -64,7 +64,10 @@ class ContextLeakageScenario(ScenarioTemplate):
         super().__init__(ui, params)
         self.context_leak_log_save_path = self.DEFAULT_LOG_PATH
         self.counter = 0
+        self.model_level = "low"
+        self.max_round = 1
 
+    def setup_environment(self) -> None:
         self.model_level = self.ui.multiple_choice(
             sender="Context leakage team",
             prompt="What model would you like to test?",
@@ -78,9 +81,6 @@ class ContextLeakageScenario(ScenarioTemplate):
                 choices=["1", "5", "20", "50", "100"],
             )
         )
-
-    def setup_environment(self) -> None:
-        pass
 
     def setup_agents(self) -> Iterable[Agent]:
         """Create agents specific to context leakage."""
