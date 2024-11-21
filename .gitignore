@@ -24,3 +24,5 @@ tested_model_non_confidential.md
 
 # local reports
 reports/*.csv
+
+context_leakage_team/tested_chatbots/config.json

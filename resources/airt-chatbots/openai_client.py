@@ -49,7 +49,7 @@ class GPTRobin:
                     azure_endpoint=gpt.azure_endpoint
                 )
             )
-        print("Generating pool of", len(clients), "GPTs with each repeated in queue", batch_size, "times")
+        # print("Generating pool of", len(clients), "GPTs with each repeated in queue", batch_size, "times")
         for _ in range(batch_size):
             for c in clients:
                 self.client_queue.put_nowait(c)
