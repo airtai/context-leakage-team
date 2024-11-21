@@ -6,8 +6,6 @@ from pydantic_settings import BaseSettings
 
 
 class ChatbotConfiguration(BaseSettings):
-    JSON_CONFIG_PATH: Path = Path(__file__).parent / "config.json"
-
     LOW_SYS_PROMPT_PATH: Path = Path(__file__).parent / "prompts/low.json"
     MEDIUM_SYS_PROMPT_PATH: Path = Path(__file__).parent / "prompts/medium.json"
     HIGH_SYS_PROMPT_PATH: Path = Path(__file__).parent / "prompts/high.json"

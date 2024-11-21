@@ -1,11 +1,11 @@
-from typing import Annotated, Callable
+from typing import Annotated, Callable, Optional
 
 import requests
 
 
 def create_send_msg_to_model(
     _url: str,
-    _token: str,
+    _token: Optional[str] = None,
 ) -> Callable[[str], str]:
     def send_msg_to_model(
         msg: Annotated[str, "The message content to be sent to the model."],
@@ -26,9 +26,11 @@ def create_send_msg_to_model(
         token = _token
 
         headers = {
-            "Authorization": f"Bearer {token}",
             "Content-type": "application/json",
         }
+
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
 
         data = {"messages": [{"role": "user", "content": msg}]}
 

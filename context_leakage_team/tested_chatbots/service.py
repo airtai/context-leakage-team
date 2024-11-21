@@ -20,7 +20,6 @@ async def process_messages(  # noqa: C901
 ) -> dict[str, Any]:
     chat_messages: list = messages.get("messages")  # type: ignore
     if chat_messages is None:
-        # print("Unable to find messages in request:", messages)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing root field messages",
@@ -30,13 +29,6 @@ async def process_messages(  # noqa: C901
         config.INPUT_LIMIT is not None
         and len(chat_messages[-1]["content"]) > config.INPUT_LIMIT
     ):
-        # print(
-        #     "Content size of",
-        #     len(chat_messages[-1]["content"]),
-        #     " exceeded given limit of",
-        #     config.INPUT_LIMIT,
-        #     "characters",
-        # )
         raise HTTPException(
             status_code=452, detail="Content size exceeds specified limit"
         )
@@ -46,11 +38,10 @@ async def process_messages(  # noqa: C901
     sleep_time = config.INITIAL_SLEEP_TIME_S
     attempt = 0
 
-    async with gpt_robin.get_azure_client() as client:
+    async with gpt_robin.get_client() as client:
         while attempt < config.MAX_RETRIES:
             attempt += 1
             try:
-                # print("Starting GPT call")
                 response = await client.chat.completions.create(
                     model="gpt-4o",
                     messages=chat_messages,
@@ -59,7 +50,6 @@ async def process_messages(  # noqa: C901
                 )
 
                 if response.choices[0].finish_reason == "function_call":
-                    # print("Calling function")
                     chat_messages.append(response.choices[0].message)
                     tool_call = response.choices[0].message.function_call
                     fun_args = json.loads(tool_call.arguments)
@@ -72,7 +62,6 @@ async def process_messages(  # noqa: C901
                             "name": "get_store_locations",
                         }
                     )
-                    # print("Calling GPT with function result")
                     response = await client.chat.completions.create(
                         model="gpt-4o",
                         messages=chat_messages,
@@ -82,16 +71,12 @@ async def process_messages(  # noqa: C901
 
                 for w in lvl_config.canary_words:
                     if w in response.choices[0].message.content:
-                        # print(
-                        #     "Canary word fund in response, rejecting to send response"
-                        # )
                         return {
                             "role": "assistant",
                             "content": "I cannot assist with this request.",
                         }
 
                 if lvl_config.use_guardrails:
-                    # print("Using guardrail to check answer")
                     guard_messages = [
                         {"role": "system", "content": lvl_config.guardrail_prompt},
                         {
@@ -105,15 +90,10 @@ async def process_messages(  # noqa: C901
                     )
 
                     if guard_response.choices[0].message.content == "GOOD":
-                        # print("Guardrail accepted answer")
                         return {
                             "role": "assistant",
                             "content": response.choices[0].message.content,
                         }
-                    # print(
-                    #     "Guardrail did not accept answer. Guardrail responded with:",
-                    #     guard_response.choices[0].message.content,
-                    # )
                     return {
                         "role": "assistant",
                         "content": "I cannot assist with this request.",
@@ -124,21 +104,14 @@ async def process_messages(  # noqa: C901
                 }
 
             except openai.RateLimitError:
-                # print(
-                #     "OpenAI rate limit error happened waiting for",
-                #     sleep_time,
-                #     "seconds",
-                # )
                 await asyncio.sleep(sleep_time)
                 sleep_time *= 2
             except Exception as e:
-                # print("Unexpected exception happened")
                 traceback.print_exc(e)  # type: ignore
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Unexpected exception happened {e}",
                 ) from e
-    # print("Reached end of retry loop, returning rate limit error")
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail="You reached OpenAI rate limit",
