@@ -23,4 +23,4 @@ tested_model_confidential.md
 tested_model_non_confidential.md
 
 # local reports
-reports/*.pd
+reports/*.csv

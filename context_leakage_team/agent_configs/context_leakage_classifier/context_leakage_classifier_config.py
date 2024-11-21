@@ -1,6 +1,6 @@
 from pathlib import Path
 
-prompt_path = Path(__file__).parent / "system_prompt_1.md"
+prompt_path = Path(__file__).parent / "system_prompt.md"
 
 
 def get_prompt(confidential_part: str, not_confidential_part: str, tools: str) -> str:
