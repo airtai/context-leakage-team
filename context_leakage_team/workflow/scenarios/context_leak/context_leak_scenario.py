@@ -8,18 +8,17 @@ from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import Agent, ConversableAgent, UserProxyAgent
 from fastagency import UI
 
-from context_leakage_team.agent_configs import (
+from ...agent_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
-from context_leakage_team.tools.log_context_leakage import (
+from ...llm_config import llm_config
+from ...tools.log_context_leakage import (
     create_log_context_leakage_function,
     generate_markdown_report,
 )
-from context_leakage_team.tools.model_adapter import create_send_msg_to_model
-from context_leakage_team.workflow.scenarios.scenario_template import ScenarioTemplate
-
-from ...llm_config import llm_config
+from ...tools.model_adapter import create_send_msg_to_model
+from ..scenario_template import ScenarioTemplate
 
 
 @dataclass

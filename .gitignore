@@ -16,6 +16,3 @@ venv*
 htmlcov
 token
 .DS_Store
-
-# local reports
-reports/*.csv
