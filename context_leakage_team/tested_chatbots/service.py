@@ -63,7 +63,7 @@ async def process_messages(  # noqa: C901
                         }
                     )
                     response = await client.chat.completions.create(
-                        model="gpt-4o-min",
+                        model="gpt-4o-mini",
                         messages=chat_messages,
                         functions=functions,
                         function_call=None,  # Disabling calling function again
