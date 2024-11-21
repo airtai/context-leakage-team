@@ -64,119 +64,96 @@ def create_log_context_leakage_function(
     return log_context_leakage
 
 
-def generate_markdown_report(  # noqa: C901
-    name: str, log_path: Path, success_threshold: int = 1
-) -> str:
-    """Parses the log CSV file and generates a Markdown summary report with a combined table for all models.
-
-    Parameters:
-    - log_path (Path): Path to the CSV log file.
-    - success_threshold (int): Minimum leakage level to count as a 'successful' leakage.
-
-    Returns:
-    - str: A Markdown formatted string with detailed reporting.
-    """
-    import pandas as pd
-
-    # Load the log data from the CSV file
-    try:
-        df = pd.read_csv(log_path)
-    except FileNotFoundError:
-        return "Log file not found. Please ensure the log path is correct."
-    except pd.errors.EmptyDataError:
-        return "Log file is empty. Please provide a valid log file."
-
-    if "model_name" not in df.columns:
-        return "The log file is missing the required 'model_name' column."
-
-    # Group data by model_name
+def generate_summary_table(df: pd.DataFrame, level_emojis: dict[int, str]) -> str:
+    """Generate the leakage level summary table."""
     grouped = df.groupby("model_name")
-
-    # Initialize the overall report
-    markdown_report = f"# Context Leakage Test Report for {name}\n\n"
-
-    # Create a summary table for all models
-    level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
-
-    markdown_report += "## Leakage Level Summary Table\n\n"
-    markdown_report += (
+    summary = "## Leakage Level Summary Table\n\n"
+    summary += (
         "| Model Name |"
         + str.join("|", [f"{level_emojis[i]} Level {i} " for i in range(5)])
         + "|\n"
     )
-    markdown_report += (
-        "|--------------|---------|---------|---------|---------|---------|\n"
-    )
+    summary += "|--------------|---------|---------|---------|---------|---------|\n"
 
     for model_name, group in grouped:
         leakage_counts = group["leakage_level"].value_counts()
-        row = [
-            f"{leakage_counts.get(level, 0)}" for level in range(5)
-        ]  # Ensure counts for all levels
-        markdown_report += f"| {model_name:<12} | {' | '.join(row)} |\n"
+        row = [f"{leakage_counts.get(level, 0)}" for level in range(5)]
+        summary += f"| {model_name:<12} | {' | '.join(row)} |\n"
+    return summary
 
-    # Add detailed breakdown for each model
+
+def generate_model_details(
+    model_name: str,
+    model_df: pd.DataFrame,
+    level_emojis: dict[int, str],
+    success_threshold: int,
+) -> str:
+    """Generate detailed report for a specific model."""
+    total_attempts = len(model_df)
+    successful_attempts = model_df[
+        model_df["leakage_level"] >= success_threshold
+    ].shape[0]
+    success_rate = (
+        (successful_attempts / total_attempts) * 100 if total_attempts > 0 else 0
+    )
+    leakage_distribution = model_df["leakage_level"].value_counts().sort_index()
+
+    details = f"### Model: {model_name}\n\n"
+    details += f"**Total Attempts**: {total_attempts}\n\n"
+    details += f"**Successful Attempts** (Leakage level >= {success_threshold}): {successful_attempts} ({success_rate:.2f}%)\n\n"
+
+    # Success board
+    details += "#### Success Board\n\n"
+    for level in range(5):
+        count = leakage_distribution.get(level, 0)
+        emoji = level_emojis.get(level, "❓")
+        details += f"- Level {level} ({emoji}): {count} occurrences\n"
+
+    # Leakage level distribution
+    details += "\n#### Leakage Level Distribution\n\n"
+    details += "| Leakage Level | Count |\n"
+    details += "|---------------|-------|\n"
+    for level, count in leakage_distribution.items():
+        details += f"| {level}             | {count}   |\n"
+
+    # Successful prompts and responses
+    successful_prompts = model_df[model_df["leakage_level"] >= success_threshold][
+        ["prompt", "result", "reasoning", "leakage_level"]
+    ]
+    if not successful_prompts.empty:
+        details += "\n#### List of Successful Prompts and Responses\n\n"
+        for level, level_group in successful_prompts.groupby("leakage_level"):
+            details += f"### Leakage Level {level} {level_emojis[level]}\n"
+            for index, row in level_group.iterrows():
+                details += f"#### 📝 Prompt {index + 1}\n"
+                details += "| Attribute | Value |\n"
+                details += "|-----------|-------|\n"
+                details += f"| **Prompt** | {row['prompt']} |\n"
+                details += "| **Response** | {} |\n".format(
+                    row["result"].replace("\n", "<br>")
+                )
+                details += f"| **Reasoning** | {row['reasoning']} |\n\n"
+
+    return details
+
+
+def generate_markdown_report(
+    name: str, log_path: Path, success_threshold: int = 1
+) -> str:
+    """Generate a Markdown report."""
+    level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
+
+    # Load and validate log data
+    df = pd.read_csv(log_path)
+
+    # Generate Markdown content
+    markdown_report = f"# Context Leakage Test Report for {name}\n\n"
+    markdown_report += generate_summary_table(df, level_emojis)
+
     markdown_report += "\n## Detailed Reports per Model\n\n"
-
-    for model_name, group in grouped:
-        # Basic statistics
-        total_attempts = len(group)
-        successful_attempts = group[group["leakage_level"] >= success_threshold].shape[
-            0
-        ]
-        success_rate = (
-            (successful_attempts / total_attempts) * 100 if total_attempts > 0 else 0
+    for model_name, model_df in df.groupby("model_name"):
+        markdown_report += generate_model_details(
+            model_name, model_df, level_emojis, success_threshold
         )
-
-        # Distribution of context leakage levels
-        leakage_distribution = group["leakage_level"].value_counts().sort_index()
-
-        # Add model-specific header
-        markdown_report += f"### Model: {model_name}\n\n"
-        markdown_report += f"**Total Attempts**: {total_attempts}\n\n"
-        markdown_report += f"**Successful Attempts** (Leakage level >= {success_threshold}): {successful_attempts} ({success_rate:.2f}%)\n\n"
-
-        # Success board
-        markdown_report += "#### Success Board\n\n"
-        for level in range(5):
-            count = leakage_distribution.get(level, 0)
-            emoji = level_emojis.get(level, "❓")
-            markdown_report += f"- Level {level} ({emoji}): {count} occurrences\n"
-
-        # Summary of leakage level distribution
-        markdown_report += "\n#### Leakage Level Distribution\n\n"
-        markdown_report += "| Leakage Level | Count |\n"
-        markdown_report += "|---------------|-------|\n"
-        for level, count in leakage_distribution.items():
-            markdown_report += f"| {level}             | {count}   |\n"
-
-        # Adding a visually pleasing list of successful prompts and responses
-        successful_prompts = group[group["leakage_level"] >= success_threshold][
-            ["prompt", "result", "reasoning", "leakage_level"]
-        ]
-        if not successful_prompts.empty:
-            markdown_report += "\n#### List of Successful Prompts and Responses\n"
-            markdown_report += (
-                "\nBelow is a detailed list of successful prompts and their responses, "
-                "highlighting effective context leakage detections.\n\n"
-            )
-
-            # Group by leakage level and add title before each group
-
-            for level, group in successful_prompts.groupby("leakage_level"):
-                markdown_report += f"### Leakage Level {level} {level_emojis[level]}\n"
-
-                for index, row in group.iterrows():
-                    markdown_report += f"#### 📝 Prompt {index + 1}\n"
-                    markdown_report += "| Attribute | Value |\n"
-                    markdown_report += "|-------|-------|\n"
-                    markdown_report += f"| **Prompt** | {row['prompt']} |\n"  # type: ignore[call-overload]
-                    markdown_report += "| **Response** | {} |\n".format(
-                        row["result"].replace(  # type: ignore[call-overload]
-                            "\n", "<br>"
-                        )
-                    )
-                    markdown_report += f"| **Reasoning** | {row['reasoning']} |\n"  # type: ignore[call-overload]
-                    markdown_report += "\n"
 
     return markdown_report

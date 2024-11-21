@@ -43,7 +43,7 @@ async def process_messages(  # noqa: C901
             attempt += 1
             try:
                 response = await client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4o-mini",
                     messages=chat_messages,
                     functions=functions,
                     function_call="auto",
@@ -63,7 +63,7 @@ async def process_messages(  # noqa: C901
                         }
                     )
                     response = await client.chat.completions.create(
-                        model="gpt-4o",
+                        model="gpt-4o-min",
                         messages=chat_messages,
                         functions=functions,
                         function_call=None,  # Disabling calling function again
@@ -86,7 +86,7 @@ async def process_messages(  # noqa: C901
                     ]
 
                     guard_response = await client.chat.completions.create(
-                        model="gpt-4o", messages=guard_messages
+                        model="gpt-4o-mini", messages=guard_messages
                     )
 
                     if guard_response.choices[0].message.content == "GOOD":
