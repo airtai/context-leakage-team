@@ -16,11 +16,3 @@ venv*
 htmlcov
 token
 .DS_Store
-
-# tested model configuration
-tested_model_api_config.sh
-tested_model_confidential.md
-tested_model_non_confidential.md
-
-# local reports
-reports/*.csv

@@ -3,12 +3,14 @@ from typing import Any
 from fastagency.adapters.fastapi import FastAPIAdapter
 from fastapi import FastAPI
 
+from ..tested_chatbots.chatbots_router import router as chatbots_router
 from ..workflow import wf
 
 adapter = FastAPIAdapter(provider=wf)
 
 app = FastAPI()
 app.include_router(adapter.router)
+app.include_router(chatbots_router)
 
 
 # this is optional, but we would like to see the list of available workflows

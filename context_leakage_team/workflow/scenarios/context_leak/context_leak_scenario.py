@@ -1,7 +1,6 @@
 import functools
 from collections.abc import Iterable
 from dataclasses import dataclass
-from os import environ
 from pathlib import Path
 from typing import Any, Callable
 
@@ -9,18 +8,17 @@ from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import Agent, ConversableAgent, UserProxyAgent
 from fastagency import UI
 
-from context_leakage_team.agent_configs import (
+from ...agent_configs import (
     get_context_leakage_black_box_prompt,
     get_context_leakage_classifier_prompt,
 )
-from context_leakage_team.tools.log_context_leakage import (
+from ...llm_config import llm_config
+from ...tools.log_context_leakage import (
     create_log_context_leakage_function,
     generate_markdown_report,
 )
-from context_leakage_team.tools.model_adapter import create_send_msg_to_model
-from context_leakage_team.workflow.scenarios.scenario_template import ScenarioTemplate
-
-from ...llm_config import llm_config
+from ...tools.model_adapter import create_send_msg_to_model
+from ..scenario_template import ScenarioTemplate
 
 
 @dataclass
@@ -41,22 +39,13 @@ class ContextLeakageScenario(ScenarioTemplate):
         / "default_report.csv"
     )
     TESTED_MODEL_CONFIDENTIAL_PATH = (
-        Path(__file__).parent
-        / ".."
-        / ".."
-        / ".."
-        / ".."
-        / "tested_model_config"
-        / "tested_model_confidential.md"
+        Path(__file__).parents[3] / "tested_chatbots" / "prompts" / "confidential.md"
     )
     TESTED_MODEL_NON_CONFIDENTIAL_PATH = (
-        Path(__file__).parent
-        / ".."
-        / ".."
-        / ".."
-        / ".."
-        / "tested_model_config"
-        / "tested_model_non_confidential.md"
+        Path(__file__).parents[3]
+        / "tested_chatbots"
+        / "prompts"
+        / "non_confidential.md"
     )
 
     def __init__(self, ui: UI, params: dict[str, Any]) -> None:
@@ -225,18 +214,10 @@ class ContextLeakageScenario(ScenarioTemplate):
 
     def get_function_to_register(self, model_level: str) -> FunctionToRegister:
         """Return the function to register for model interaction."""
-        url = environ.get("TESTED_MODEL_URL")
-        token = environ.get("TESTED_MODEL_TOKEN")
-
-        if not url or not token:
-            raise ValueError(
-                "MODEL_URL and MODEL_TOKEN environment variables must be set"
-            )
+        url = "http://localhost:8008"
 
         return FunctionToRegister(
-            function=create_send_msg_to_model(
-                _url=f"{url}/{model_level}", _token=token
-            ),
+            function=create_send_msg_to_model(_url=f"{url}/{model_level}"),
             name="send_msg_to_model",
             description="Sends a message to the tested LLM",
         )
