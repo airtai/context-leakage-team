@@ -5,7 +5,7 @@
 The **Prompt Leakage Probing** project provides a framework for testing Large Language Model (LLM) agents for their susceptibility to system prompt leaks. It currently implements two attack strategies:
 
 1. **Simple Attack**: Uses `ContextLeakagePromptGeneratorAgent` and `ContextLeakageClassifierAgent` to attempt prompt extraction.
-2. **Base64 Attack**: Enables `ContextLeakagePromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to avoid sensitive prompt detection.
+2. **Base64 Attack**: Enables `ContextLeakagePromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to bypass sensitive prompt detection.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Ensure you have the following installed:
 
 - Python >=3.10
 
-Ensure that you have your `OPENAI_API_KEY` exported to your environment.
+Additionally, ensure that your `OPENAI_API_KEY` is exported to your environment.
 
 ## Setup Instructions
 
@@ -45,29 +45,33 @@ When you open the application in your browser, you'll first see the workflow sel
 
 ![Workflow selection](imgs/workflow_selection.png?raw=true "Workflow selection")
 
-### Running the tests
+### Running the Tests
 
-After you select the "Attempt to leak context from selected LLM model" you will start a workflow for for probing the LLM for context leakage, inside it you will now:
-    1. Select the prompt leakage scenario you would like to test
-    2. Select the model you would like to test
-    3. Select how many attempts to leak the context will be made in this chat
+After selecting **"Attempt to leak context from selected LLM model"**, you will start a workflow for probing the LLM for context leakage. During this process, you will:
+
+1. Select the prompt leakage scenario you want to test.
+2. Choose the model you want to test.
+3. Specify the number of attempts to leak the context in the chat.
 
 ![Test configuration](imgs/configuring_testing.png?raw=true "Test configuration")
 
-Now, the `ContextLeakagePromptGeneratorAgent` will start to generate adversial prompts with a goal of making the tested Agent leak its prompt. After each response from the tested Agent, the `ContextLeakageClassifierAgent` will analyse the response and report the level of context leakage.
+The `ContextLeakagePromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `ContextLeakageClassifierAgent` will analyze the response and report the level of context leakage.
 
+Prompt generation:
 ![Prompt generation](imgs/prompt_generation.png?raw=true "Prompt generation")
 
-![Workflow selection](imgs/tested_agent_response.png?raw=true "Tested agent response")
+Tested agent response:
+![Tested agent response](imgs/tested_agent_response.png?raw=true "Tested agent response")
 
+Response classification:
 ![Response classification](imgs/response_classification.png?raw=true "Response classification")
 
-All response classifications are saved as CSV files in the `reports` folder. These files contain the prompt, response, reasoning, and leakage level and are used to display the reports flow, which we will now demonstrate.
+All response classifications are saved as CSV files in the `reports` folder. These files contain the prompt, response, reasoning, and leakage level. They are used to display the reports flow, which we will now demonstrate.
 
-### Displating the reports
+### Displaying the Reports
 
-In the workflow selection screen, select the "Report on the context leak attempt".
-In this workflow you will get a detailed report for each context leak scenario and model combination that has been run until now.
+In the workflow selection screen, select **"Report on the context leak attempt"**.
+This workflow provides a detailed report for each context leakage scenario and model combination that has been tested.
 
 ![Report flow](imgs/report_flow.png?raw=true "Report flow")
 
