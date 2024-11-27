@@ -1,88 +1,107 @@
-# context-leakage-team
+# Prompt Leakage Probing
 
 ## Overview
-This project focuses on testing machine learning models while ensuring data confidentiality and preventing context leakage. You will need to configure the tested model and manage confidential and non-confidential information before running the context leakage detection tool.
+
+The **Prompt Leakage Probing** project provides a framework for testing Large Language Model (LLM) agents for their susceptibility to system prompt leaks, it was implemented using [FastAgency](https://fastagency.ai/latest/) and [AutoGen](https://ag2.ai/). It currently implements two attack strategies:
+
+1. **Simple Attack**: Uses `PromptGeneratorAgent` and `PromptLeakageClassifierAgent` to attempt prompt extraction.
+2. **Base64 Attack**: Enables `PromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to bypass sensitive prompt detection.
 
 ## Prerequisites
 
-Before proceeding, ensure the following:
+Ensure you have the following installed:
 
-- Python >=3.10 installed
+- Python >=3.10
+
+Additionally, ensure that your `OPENAI_API_KEY` is exported to your environment.
 
 ## Setup Instructions
 
-### 1. Clone the Repository
+### 1. Install the Project
 
-\```bash
-git clone https://github.com/airtai/context-leakage-team.git
-cd context-leakage-team
-\```
+Clone the repository and install the dependencies:
 
-### 2. Install Dependencies
-
-Install the required Python packages:
-
-\```bash
+```bash
 pip install ."[dev]"
-\```
+```
 
-### 3. Configure the Model API
+### 2. Run the Project Locally
 
-Before running the tool, you must configure the model's API settings in `tested_model_config/tested_model_api_config.json`.
+Start the application using the provided script:
 
-Example JSON configuration:
+```bash
+./scripts/run_fastapi_locally.sh
+```
 
-\```json
-{
-    "url": "your model url",
-    "token": "your token"
-}
-\```
+This will start the [FastAgency](https://fastagency.ai/latest/) FastAPI provider and Mesop provider instances. You can then access the application through your browser.
 
-- `url`: The URL where your model is accessible (such as an API endpoint).
-- `token`: The access token required to authenticate requests to the model API.
+### 3. Use the Devcontainer (Optional)
 
-### 4. Add Confidential and Non-Confidential Model Information
+The project comes with **Devcontainers** configured, enabling a streamlined development environment setup if you use tools like Visual Studio Code with the Devcontainer extension.
 
-- **Confidential Part**: Add the confidential information related to your tested model in the `tested_model_config/tested_model_confidential.md` file.
+## Application Usage
 
-- **Non-Confidential Part**: Add the non-confidential information of your tested model in the `tested_model_config/tested_model_non_confidential.md` file.
+When you open the application in your browser, you'll first see the workflow selection screen.
 
-### 5. Run the Context Leakage Detection Team
+![Workflow selection](docs/docs/assets/img/workflow_selection.png?raw=true "Workflow selection")
 
-Once the model configuration is set and the confidential/non-confidential parts are in place, you can run the context leakage detection tool using the following command:
+### Running the Tests
 
-\```bash
-fastagency run context_leakage_team/context_leakage_team.py
-\```
+After selecting **"Attempt to leak the prompt from selected LLM model"**, you will start a workflow for probing the LLM for prompt leakage. During this process, you will:
 
-## Folder Structure
+1. Select the prompt leakage scenario you want to test.
+2. Choose the model you want to test.
+3. Specify the number of attempts to leak the prompt in the chat.
 
-This is the basic folder structure, most of the non important files are omitted for simplicity of the overview.
+![Test configuration](docs/docs/assets/img/configuring_testing.png?raw=true "Test configuration")
 
-\```
-├── tested_model_config
-│   ├── tested_model_api_config.json         # Model API configuration file
-│   ├── tested_model_confidential.md         # Confidential model information
-│   └── tested_model_non_confidential.md     # Non-confidential model information
-├── context_leakage_team
-│   └── context_leakage_team.py              # Script to run context leakage detection
-├── pyproject.toml                           # List of dependencies
-└── README.md                                # Project documentation
-\```
+The `PromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `PromptLeakageClassifierAgent` will analyze the response and report the level of prompt leakage.
 
-## Example Usage
+#### Prompt generation
 
-1. Ensure that your `tested_model_api_config.json` is correctly configured with the model URL and token.
-2. Place the confidential and non-confidential information in their respective files.
-3. Run the context leakage detection:
+In this step, the `PromptGeneratorAgent` generates adversarial prompts designed to elicit prompt leakage from the tested agent. The tested model is then probed with the generated prompt using a function call.
 
-\```bash
-fastagency run context_leakage_team/context_leakage_team.py
-\```
+![Prompt generation](docs/docs/assets/img/prompt_generation.png?raw=true "Prompt generation")
 
-This will analyze the model configuration for potential context leaks.
+#### Tested agent response
 
-## License
+The tested agent's response is the returned value from the function call initiated by the `PromptGeneratorAgent`. This response represents how the agent reacts to the probing prompt and serves as a input for subsequent analysis.
 
-Include your license information here.
+![Tested agent response](docs/docs/assets/img/tested_agent_response.png?raw=true "Tested agent response")
+
+#### Response classification
+
+The response is then passed to the `PromptLeakageClassifierAgent`, which evaluates it for signs of prompt leakage. This evaluation informs whether sensitive information from the original prompt has been exposed. Additionally, the response may guide further prompt refinement, enabling an iterative approach to testing the agent's resilience against prompt leakage attempts.
+
+![Response classification](docs/docs/assets/img/response_classification.png?raw=true "Response classification")
+
+All response classifications are saved as CSV files in the `reports` folder. These files contain the prompt, response, reasoning, and leakage level. They are used to display the reports flow, which we will now demonstrate.
+
+### Displaying the Reports
+
+In the workflow selection screen, select **"Report on the prompt leak attempt"**.
+This workflow provides a detailed report for each prompt leakage scenario and model combination that has been tested.
+
+![Report flow](docs/docs/assets/img/report_flow.png?raw=true "Report flow")
+
+## Tested Models
+
+The project includes three tested model endpoints that are started alongside the service. These endpoints are used to demonstrate the prompt leakage workflow and can be accessed through predefined routes. The source code for these models is located in the `tested_chatbots` folder.
+
+### Description of Tested Models
+
+| **Model** | **Description**                                                                                          | **Endpoint**   |
+|-----------|----------------------------------------------------------------------------------------------------------|----------------|
+| Easy      | Uses a basic prompt without any hardening techniques. No canary words are included, and no LLM guardrail is applied. | `/low`         |
+| Medium    | Applies prompt hardening techniques to improve robustness over the easy model but still lacks canary words or guardrail. | `/medium`      |
+| Hard      | Combines prompt hardening with the addition of canary words and the use of a guardrail for better protection. | `/high`        |
+
+### Implementation Details
+
+The endpoints for these models are defined in the `tested_chatbots/chatbots_router` file. They are part of the FastAPI provider and are available under the following paths:
+
+- `/low`: Easy model endpoint.
+- `/medium`: Medium model endpoint.
+- `/high`: Hard model endpoint.
+
+These endpoints demonstrate different levels of susceptibility to prompt leakage and serve as examples to test the implemented agents and scenarios.

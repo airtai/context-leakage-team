@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Running pyup_dirs..."
-pyup_dirs --py38-plus --recursive context_leakage_team tests
+pyup_dirs --py38-plus --recursive prompt_leakage_probing tests
 
 echo "Running ruff linter (isort, flake, pyupgrade, etc. replacement)..."
 ruff check

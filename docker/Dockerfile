@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends nginx gettext \
     && rm -rf /var/lib/apt/lists/*
 
-COPY context_leakage_team /app/context_leakage_team
+COPY prompt_leakage_probing /app/prompt_leakage_probing
 
 COPY pyproject.toml README.md /app/
 COPY docker/content/* /app/

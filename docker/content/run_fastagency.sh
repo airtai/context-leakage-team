@@ -25,7 +25,7 @@ cat /etc/nginx/conf.d/default.conf
 nginx -g "daemon off;" &
 
 # Run uvicorn server
-uvicorn context_leakage_team.deployment.main_1_fastapi:app --host 0.0.0.0 --port $FASTAPI_PORT > /dev/stdout 2>&1 &
+uvicorn prompt_leakage_probing.deployment.main_1_fastapi:app --host 0.0.0.0 --port $FASTAPI_PORT > /dev/stdout 2>&1 &
 
 # Run gunicorn server
 # Start multiple single-worker gunicorn instances on consecutive ports
@@ -33,7 +33,7 @@ for ((i=1; i<$WORKERS+1; i++))
 do
 	PORT=$((MESOP_PORT + i))
     echo "Starting gunicorn on port $PORT"
-    gunicorn --workers=1 context_leakage_team.deployment.main_2_mesop:app --bind 0.0.0.0:$PORT > /dev/stdout 2>&1 &
+    gunicorn --workers=1 prompt_leakage_probing.deployment.main_2_mesop:app --bind 0.0.0.0:$PORT > /dev/stdout 2>&1 &
 done
 
 # Wait for all background processes

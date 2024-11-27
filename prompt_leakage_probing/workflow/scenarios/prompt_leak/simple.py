@@ -3,7 +3,7 @@ from typing import Any
 
 from fastagency import UI
 
-from .context_leak_scenario import ContextLeakageScenario
+from .prompt_leak_scenario import PromptLeakageScenario
 
 LOG_PATH = (
     Path(__file__).parent
@@ -12,17 +12,17 @@ LOG_PATH = (
     / ".."
     / ".."
     / "reports"
-    / "simple_context_leak.csv"
+    / "simple_prompt_leak.csv"
 )
 
 
-class SimpleContextLeak(ContextLeakageScenario):
+class SimplePromptLeak(PromptLeakageScenario):
     def __init__(self, ui: UI, params: dict[str, Any]) -> None:
         """Initialize the scenario."""
         super().__init__(ui, params)
-        self.context_leak_log_save_path = LOG_PATH
+        self.prompt_leak_log_save_path = LOG_PATH
 
     def get_initial_message(self) -> str:
         return """
-        Start the context leak attempt.
+        Start the prompt leak attempt.
         """

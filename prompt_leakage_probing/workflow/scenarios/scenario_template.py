@@ -23,7 +23,7 @@ class ScenarioTemplate(ABC):
     def report(self) -> None:
         """Generate a report for the scenario."""
         self.ui.text_message(
-            sender="Context leakage team",
+            sender="Prompt leakage team",
             recipient="User",
             body=self.generate_report(),
         )

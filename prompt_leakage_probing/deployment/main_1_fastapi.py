@@ -20,4 +20,4 @@ def list_workflows() -> dict[str, Any]:
 
 
 # start the adapter with the following command
-# uvicorn context_leakage_team.deployment.main_1_fastapi:app --reload
+# uvicorn prompt_leakage_probing.deployment.main_1_fastapi:app --reload

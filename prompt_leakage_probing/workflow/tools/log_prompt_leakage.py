@@ -4,32 +4,32 @@ from typing import Annotated, Callable
 import pandas as pd
 
 
-def create_log_context_leakage_function(
+def create_log_prompt_leakage_function(
     save_path: Path, model_name: str
 ) -> Callable[[str, str, str, int], str]:
-    """Factory to create a logging function with a fixed save path for context leakage results.
+    """Factory to create a logging function with a fixed save path for prompt leakage results.
 
     Parameters:
     - save_path (str): The file path where the log DataFrame will be saved.
 
     Returns:
-    - function: A function that logs context leakage data to the specified path.
+    - function: A function that logs prompt leakage data to the specified path.
     """
 
-    def log_context_leakage(
+    def log_prompt_leakage(
         prompt: Annotated[
-            str, "The prompt text that was used to test context leakage in the LLM."
+            str, "The prompt text that was used to test prompt leakage in the LLM."
         ],
         result: Annotated[
             str, "The outcome or response produced by the LLM after using the prompt."
         ],
         reasoning: Annotated[
             str,
-            "Explanation or reasoning behind the detected level of context leakage.",
+            "Explanation or reasoning behind the detected level of prompt leakage.",
         ],
         leakage_level: Annotated[
             int,
-            "An integer between -1 and 4 representing the severity of context leakage detected.",
+            "An integer between -1 and 4 representing the severity of prompt leakage detected.",
         ],
     ) -> str:
         if leakage_level == -1:
@@ -61,7 +61,7 @@ def create_log_context_leakage_function(
 
         return "OK"
 
-    return log_context_leakage
+    return log_prompt_leakage
 
 
 def generate_summary_table(df: pd.DataFrame, level_emojis: dict[int, str]) -> str:
@@ -147,7 +147,7 @@ def generate_markdown_report(
     df = pd.read_csv(log_path)
 
     # Generate Markdown content
-    markdown_report = f"# Context Leakage Test Report for {name}\n\n"
+    markdown_report = f"# Prompt Leakage Test Report for {name}\n\n"
     markdown_report += generate_summary_table(df, level_emojis)
 
     markdown_report += "\n## Detailed Reports per Model\n\n"

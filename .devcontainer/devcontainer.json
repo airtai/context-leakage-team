@@ -3,8 +3,7 @@
     "dockerComposeFile": [
         "./docker-compose.yml"
     ],
-    "service": "python-3.10-context_leakage_team",
-
+    "service": "python-3.10-prompt_leakage_probing",
     "secrets": {
         "OPENAI_API_KEY": {
             "description": "This key is optional and only needed if you are working on OpenAI-related code. Leave it blank if not required. You can always set it later as an environment variable in the codespace terminal."
@@ -17,7 +16,7 @@
         }
     },
     "shutdownAction": "stopCompose",
-    "workspaceFolder": "/workspaces/context_leakage_team",
+    "workspaceFolder": "/workspaces/prompt_leakage_probing",
     // "runArgs": [],
     "remoteEnv": {},
     "features": {
