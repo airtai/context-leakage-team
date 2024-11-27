@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for context_leakage_team
+# fly.toml app configuration file generated for prompt_leakage_probing
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'context-leakage-team'
+app = 'prompt-leakage-probing'
 primary_region = 'ams'
 
 [build]

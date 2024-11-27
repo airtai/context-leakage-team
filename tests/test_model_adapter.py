@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 
-from context_leakage_team.workflow.tools.model_adapter import create_send_msg_to_model
+from prompt_leakage_probing.workflow.tools.model_adapter import create_send_msg_to_model
 
 
 # Test case for a successful API call

@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "context-leakage-team"
-description = "Context leakage team: FastAgency based team for testing context leakage."
+name = "prompt-leakage-probing"
+description = "Prompt leakage team: FastAgency based team for testing prompt leakage."
 readme = "README.md"
 authors = [
     { name = "airt", email = "info@airt.ai" },
@@ -46,7 +46,7 @@ testing = [
 ]
 
 dev = [
-    "context-leakage-team[lint,testing]",
+    "prompt-leakage-probing[lint,testing]",
     "pre-commit==4.0.1",
     "detect-secrets==1.5.0",
 ]
@@ -54,10 +54,10 @@ dev = [
 [project.urls]
 
 [tool.hatch.version]
-path = "context_leakage_team/__about__.py"
+path = "prompt_leakage_probing/__about__.py"
 
 [tool.hatch.build.targets.wheel]
-only-include = ["context_leakage_team"]
+only-include = ["prompt_leakage_probing"]
 
 [tool.pytest.ini_options]
 filterwarnings =["ignore::DeprecationWarning"]
@@ -68,7 +68,7 @@ testpaths = [
 
 [tool.mypy]
 
-files = ["context_leakage_team", "tests"]
+files = ["prompt_leakage_probing", "tests"]
 
 strict = true
 python_version = "3.10"
@@ -94,7 +94,7 @@ disallow_any_unimported = false
 [tool.ruff]
 fix = true
 line-length = 88
-include = ["context_leakage_team/**/*.py", "context_leakage_team/**/*.pyi", "pyproject.toml"]
+include = ["prompt_leakage_probing/**/*.py", "prompt_leakage_probing/**/*.pyi", "pyproject.toml"]
 exclude = []
 
 [tool.ruff.lint]

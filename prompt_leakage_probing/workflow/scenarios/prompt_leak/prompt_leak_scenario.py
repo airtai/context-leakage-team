@@ -8,7 +8,7 @@ from autogen import GroupChat, GroupChatManager, register_function
 from autogen.agentchat import Agent, ConversableAgent, UserProxyAgent
 from fastagency import UI
 
-from context_leakage_team.workflow.agents import (
+from prompt_leakage_probing.workflow.agents import (
     PromptGeneratorAgent,
     PromptLeakageClassifierAgent,
 )

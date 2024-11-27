@@ -13,8 +13,8 @@ ui = MesopUI()
 app = FastAgency(
     provider=provider,
     ui=MesopUI(),
-    title="Context Leakage Team",
+    title="Prompt Leakage Probing",
 )
 
 # start the provider with the following command
-# gunicorn context_leakage_team.deployment.main_2_mesop:app -b 0.0.0.0:8888 --reload
+# gunicorn prompt_leakage_probing.deployment.main_2_mesop:app -b 0.0.0.0:8888 --reload
