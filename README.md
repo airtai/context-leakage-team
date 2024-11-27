@@ -1,87 +1,97 @@
-# context-leakage-team
+# Prompt Leakage Probing
 
 ## Overview
-This project focuses on testing machine learning models while ensuring data confidentiality and preventing context leakage. You will need to configure the tested model and manage confidential and non-confidential information before running the context leakage detection tool.
+
+The **Prompt Leakage Probing** project provides a framework for testing Large Language Model (LLM) agents for their susceptibility to system prompt leaks. It currently implements two attack strategies:
+
+1. **Simple Attack**: Uses `PromptLeakagePromptGeneratorAgent` and `PromptLeakageClassifier` to attempt prompt extraction.
+2. **Base64 Attack**: Encodes sensitive parts of the prompt in Base64 via the Generator for testing the model's ability to decode and potentially leak these parts.
 
 ## Prerequisites
 
-Before proceeding, ensure the following:
+Ensure you have the following installed:
 
-- Python >=3.10 installed
+- Python >=3.10
 
 ## Setup Instructions
 
-### 1. Clone the Repository
+### 1. Install the Project
 
-\```bash
-git clone https://github.com/airtai/context-leakage-team.git
-cd context-leakage-team
-\```
+Clone the repository and install the dependencies:
 
-### 2. Install Dependencies
-
-Install the required Python packages:
-
-\```bash
+```bash
 pip install ."[dev]"
-\```
+```
 
-### 3. Configure the Model API
+### 2. Run the Project Locally
 
-Before running the tool, you must configure the model's API settings in `tested_model_config/tested_model_api_config.json`.
+Start the application using the provided script:
 
-Example JSON configuration:
+```bash
+./scripts/run_fastapi_locally.sh
+```
 
-\```json
-{
-    "url": "your model url",
-    "token": "your token"
-}
-\```
+This will start the Fastagency FastAPI provider and Mesop provider instances. You can then access the application through your browser.
 
-- `url`: The URL where your model is accessible (such as an API endpoint).
-- `token`: The access token required to authenticate requests to the model API.
+### 3. Use the Devcontainer (Optional)
 
-### 4. Add Confidential and Non-Confidential Model Information
+The project comes with **Devcontainers** configured, enabling a streamlined development environment setup if you use tools like Visual Studio Code with the Devcontainer extension.
 
-- **Confidential Part**: Add the confidential information related to your tested model in the `tested_model_config/tested_model_confidential.md` file.
+## Application Usage
 
-- **Non-Confidential Part**: Add the non-confidential information of your tested model in the `tested_model_config/tested_model_non_confidential.md` file.
+When you open the application in your browser, you'll find:
 
-### 5. Run the Context Leakage Detection Team
 
-Once the model configuration is set and the confidential/non-confidential parts are in place, you can run the context leakage detection tool using the following command:
+## Adding New Agents and Scenarios
 
-\```bash
-fastagency run context_leakage_team/context_leakage_team.py
-\```
+### Agents
+
+To add new agents:
+
+- Locate existing agents in `context_leakage_team/workflow/agents/`.
+- Implement your new agent as a class inheriting the appropriate base classes.
+- Place the implementation in the `agents/` directory.
+
+### Scenarios
+
+To add new scenarios:
+
+- Existing scenarios are organized under `context_leakage_team/workflow/scenarios/`.
+- Scenarios are structured by type of attack.
+- Add new scenarios as modules within the `scenarios/` directory, ensuring they follow the established structure.
 
 ## Folder Structure
 
-This is the basic folder structure, most of the non important files are omitted for simplicity of the overview.
+Here is the basic folder structure:
 
-\```
-├── tested_model_config
-│   ├── tested_model_api_config.json         # Model API configuration file
-│   ├── tested_model_confidential.md         # Confidential model information
-│   └── tested_model_non_confidential.md     # Non-confidential model information
-├── context_leakage_team
-│   └── context_leakage_team.py              # Script to run context leakage detection
-├── pyproject.toml                           # List of dependencies
-└── README.md                                # Project documentation
-\```
+```
+├── agents
+│   ├── prompt_leakage_prompt_generator_agent.py  # Simple attack generator
+│   ├── prompt_leakage_classifier.py             # Simple attack classifier
+│   ├── base64_leakage_agent.py                  # Base64 attack generator
+├── scenarios
+│   ├── easy                                     # Easy scenarios
+│   ├── medium                                   # Medium scenarios
+│   └── hard                                     # Hard scenarios
+├── scripts
+│   └── run_fastapi_locally.sh                   # Script to start the application locally
+├── devcontainer                                 # Devcontainer configuration
+├── pyproject.toml                               # Project dependencies
+└── README.md                                    # Project documentation
+```
 
 ## Example Usage
 
-1. Ensure that your `tested_model_api_config.json` is correctly configured with the model URL and token.
-2. Place the confidential and non-confidential information in their respective files.
-3. Run the context leakage detection:
+1. Start the FastAPI application:
+   ```bash
+   ./scripts/run_fastapi_locally.sh
+   ```
 
-\```bash
-fastagency run context_leakage_team/context_leakage_team.py
-\```
+2. Open your browser and navigate to the application interface.
 
-This will analyze the model configuration for potential context leaks.
+3. Select a tested model endpoint (Easy, Medium, Hard).
+
+4. Use the provided agents and scenarios to test the model's susceptibility to prompt leakage.
 
 ## License
 
