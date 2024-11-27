@@ -57,13 +57,22 @@ After selecting **"Attempt to leak context from selected LLM model"**, you will 
 
 The `ContextLeakagePromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `ContextLeakageClassifierAgent` will analyze the response and report the level of context leakage.
 
-Prompt generation:
+#### Prompt generation
+
+In this step, the `ContextLeakagePromptGeneratorAgent` generates adversarial prompts designed to elicit context leakage from the tested agent. The tested model is then probed with the generated prompt using a function call.
+
 ![Prompt generation](imgs/prompt_generation.png?raw=true "Prompt generation")
 
-Tested agent response:
+#### Tested agent response
+
+The tested agent's response is the returned value from the function call initiated by the `ContextLeakagePromptGeneratorAgent`. This response represents how the agent reacts to the probing prompt and serves as a input for subsequent analysis.
+
 ![Tested agent response](imgs/tested_agent_response.png?raw=true "Tested agent response")
 
-Response classification:
+#### Response classification
+
+The response is then passed to the `ContextLeakageClassifierAgent`, which evaluates it for signs of context leakage. This evaluation informs whether sensitive information from the original prompt has been exposed. Additionally, the response may guide further prompt refinement, enabling an iterative approach to testing the agent's resilience against context leakage attempts.
+
 ![Response classification](imgs/response_classification.png?raw=true "Response classification")
 
 All response classifications are saved as CSV files in the `reports` folder. These files contain the prompt, response, reasoning, and leakage level. They are used to display the reports flow, which we will now demonstrate.
