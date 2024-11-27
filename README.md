@@ -4,8 +4,8 @@
 
 The **Prompt Leakage Probing** project provides a framework for testing Large Language Model (LLM) agents for their susceptibility to system prompt leaks. It currently implements two attack strategies:
 
-1. **Simple Attack**: Uses `PromptLeakagePromptGeneratorAgent` and `PromptLeakageClassifier` to attempt prompt extraction.
-2. **Base64 Attack**: Encodes sensitive parts of the prompt in Base64 via the Generator for testing the model's ability to decode and potentially leak these parts.
+1. **Simple Attack**: Uses `ContextLeakagePromptGeneratorAgent` and `ContextLeakageClassifierAgent` to attempt prompt extraction.
+2. **Base64 Attack**: Enables `ContextLeakagePromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to avoid sensitive prompt detection.
 
 ## Prerequisites
 
