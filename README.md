@@ -4,8 +4,8 @@
 
 The **Prompt Leakage Probing** project provides a framework for testing Large Language Model (LLM) agents for their susceptibility to system prompt leaks, it was implemented using [FastAgency](https://fastagency.ai/latest/) and [AutoGen](https://ag2.ai/). It currently implements two attack strategies:
 
-1. **Simple Attack**: Uses `ContextLeakagePromptGeneratorAgent` and `ContextLeakageClassifierAgent` to attempt prompt extraction.
-2. **Base64 Attack**: Enables `ContextLeakagePromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to bypass sensitive prompt detection.
+1. **Simple Attack**: Uses `PromptGeneratorAgent` and `PromptLeakageClassifierAgent` to attempt prompt extraction.
+2. **Base64 Attack**: Enables `PromptGeneratorAgent` to encode sensitive parts of the prompt in Base64 to bypass sensitive prompt detection.
 
 ## Prerequisites
 
@@ -47,31 +47,31 @@ When you open the application in your browser, you'll first see the workflow sel
 
 ### Running the Tests
 
-After selecting **"Attempt to leak context from selected LLM model"**, you will start a workflow for probing the LLM for context leakage. During this process, you will:
+After selecting **"Attempt to leak the prompt from selected LLM model"**, you will start a workflow for probing the LLM for prompt leakage. During this process, you will:
 
 1. Select the prompt leakage scenario you want to test.
 2. Choose the model you want to test.
-3. Specify the number of attempts to leak the context in the chat.
+3. Specify the number of attempts to leak the prompt in the chat.
 
 ![Test configuration](imgs/configuring_testing.png?raw=true "Test configuration")
 
-The `ContextLeakagePromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `ContextLeakageClassifierAgent` will analyze the response and report the level of context leakage.
+The `PromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `PromptLeakageClassifierAgent` will analyze the response and report the level of prompt leakage.
 
 #### Prompt generation
 
-In this step, the `ContextLeakagePromptGeneratorAgent` generates adversarial prompts designed to elicit context leakage from the tested agent. The tested model is then probed with the generated prompt using a function call.
+In this step, the `PromptGeneratorAgent` generates adversarial prompts designed to elicit prompt leakage from the tested agent. The tested model is then probed with the generated prompt using a function call.
 
 ![Prompt generation](imgs/prompt_generation.png?raw=true "Prompt generation")
 
 #### Tested agent response
 
-The tested agent's response is the returned value from the function call initiated by the `ContextLeakagePromptGeneratorAgent`. This response represents how the agent reacts to the probing prompt and serves as a input for subsequent analysis.
+The tested agent's response is the returned value from the function call initiated by the `PromptGeneratorAgent`. This response represents how the agent reacts to the probing prompt and serves as a input for subsequent analysis.
 
 ![Tested agent response](imgs/tested_agent_response.png?raw=true "Tested agent response")
 
 #### Response classification
 
-The response is then passed to the `ContextLeakageClassifierAgent`, which evaluates it for signs of context leakage. This evaluation informs whether sensitive information from the original prompt has been exposed. Additionally, the response may guide further prompt refinement, enabling an iterative approach to testing the agent's resilience against context leakage attempts.
+The response is then passed to the `PromptLeakageClassifierAgent`, which evaluates it for signs of prompt leakage. This evaluation informs whether sensitive information from the original prompt has been exposed. Additionally, the response may guide further prompt refinement, enabling an iterative approach to testing the agent's resilience against prompt leakage attempts.
 
 ![Response classification](imgs/response_classification.png?raw=true "Response classification")
 
@@ -79,14 +79,14 @@ All response classifications are saved as CSV files in the `reports` folder. The
 
 ### Displaying the Reports
 
-In the workflow selection screen, select **"Report on the context leak attempt"**.
-This workflow provides a detailed report for each context leakage scenario and model combination that has been tested.
+In the workflow selection screen, select **"Report on the prompt leak attempt"**.
+This workflow provides a detailed report for each prompt leakage scenario and model combination that has been tested.
 
 ![Report flow](imgs/report_flow.png?raw=true "Report flow")
 
 ## Tested Models
 
-The project includes three tested model endpoints that are started alongside the service. These endpoints are used to demonstrate the context leakage workflow and can be accessed through predefined routes. The source code for these models is located in the `tested_chatbots` folder.
+The project includes three tested model endpoints that are started alongside the service. These endpoints are used to demonstrate the prompt leakage workflow and can be accessed through predefined routes. The source code for these models is located in the `tested_chatbots` folder.
 
 ### Description of Tested Models
 

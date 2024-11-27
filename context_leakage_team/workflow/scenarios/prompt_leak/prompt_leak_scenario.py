@@ -9,13 +9,13 @@ from autogen.agentchat import Agent, ConversableAgent, UserProxyAgent
 from fastagency import UI
 
 from context_leakage_team.workflow.agents import (
-    ContextLeakageClassifierAgent,
-    ContextLeakagePromptGeneratorAgent,
+    PromptGeneratorAgent,
+    PromptLeakageClassifierAgent,
 )
 
 from ...llm_config import llm_config
-from ...tools.log_context_leakage import (
-    create_log_context_leakage_function,
+from ...tools.log_prompt_leakage import (
+    create_log_prompt_leakage_function,
     generate_markdown_report,
 )
 from ...tools.model_adapter import create_send_msg_to_model
@@ -29,7 +29,7 @@ class FunctionToRegister:
     description: str
 
 
-class ContextLeakageScenario(ScenarioTemplate):
+class PromptLeakageScenario(ScenarioTemplate):
     DEFAULT_LOG_PATH = (
         Path(__file__).parent
         / ".."
@@ -52,31 +52,31 @@ class ContextLeakageScenario(ScenarioTemplate):
     def __init__(self, ui: UI, params: dict[str, Any]) -> None:
         """Initialize the scenario."""
         super().__init__(ui, params)
-        self.context_leak_log_save_path = self.DEFAULT_LOG_PATH
+        self.prompt_leak_log_save_path = self.DEFAULT_LOG_PATH
         self.counter = 0
         self.model_level = "low"
         self.max_round = 1
 
     def setup_environment(self) -> None:
         self.model_level = self.ui.multiple_choice(
-            sender="Context leakage team",
+            sender="Prompt leakage team",
             prompt="What model would you like to test?",
             choices=["low", "medium", "high"],
         )
 
         self.max_round = int(
             self.ui.multiple_choice(
-                sender="Context leakage team",
+                sender="Prompt leakage team",
                 prompt="How much rounds would you like to run?",
                 choices=["1", "5", "20", "50", "100"],
             )
         )
 
-    def setup_context_leak_classifier_agent(self, executor: Agent) -> ConversableAgent:
+    def setup_prompt_leak_classifier_agent(self, executor: Agent) -> ConversableAgent:
         confidential_part = self.TESTED_MODEL_CONFIDENTIAL_PATH.read_text()
         non_confidential_part = self.TESTED_MODEL_NON_CONFIDENTIAL_PATH.read_text()
 
-        context_leak_classifier = ContextLeakageClassifierAgent(
+        prompt_leak_classifier = PromptLeakageClassifierAgent(
             confidential_part=confidential_part,
             non_confidential_part=non_confidential_part,
             llm_config=llm_config,
@@ -85,29 +85,29 @@ class ContextLeakageScenario(ScenarioTemplate):
             is_termination_msg=lambda _: self.counter >= self.max_round,
         )
 
-        log_context_leakage = create_log_context_leakage_function(
-            save_path=self.context_leak_log_save_path, model_name=self.model_level
+        log_prompt_leakage = create_log_prompt_leakage_function(
+            save_path=self.prompt_leak_log_save_path, model_name=self.model_level
         )
 
-        @functools.wraps(log_context_leakage)
+        @functools.wraps(log_prompt_leakage)
         def function_call_counter(*args: Any, **kwargs: dict[str, Any]) -> Any:
-            retval = log_context_leakage(*args, **kwargs)
+            retval = log_prompt_leakage(*args, **kwargs)
             if retval == "OK":
                 self.counter += 1
             return retval
 
         register_function(
             function_call_counter,
-            caller=context_leak_classifier,
+            caller=prompt_leak_classifier,
             executor=executor,
-            name="log_context_leakage",
-            description="Save context leak attempt",
+            name="log_prompt_leakage",
+            description="Save prompt leak attempt",
         )
 
-        return context_leak_classifier
+        return prompt_leak_classifier
 
     def setup_prompt_generator_agent(self, executor: Agent) -> ConversableAgent:
-        prompt_generator = ContextLeakagePromptGeneratorAgent(
+        prompt_generator = PromptGeneratorAgent(
             llm_config=llm_config,
             human_input_mode="NEVER",
             code_execution_config=False,
@@ -129,7 +129,7 @@ class ContextLeakageScenario(ScenarioTemplate):
         return prompt_generator
 
     def setup_agents(self) -> Iterable[Agent]:
-        """Create agents specific to context leakage."""
+        """Create agents specific to prompt leakage."""
         user_proxy = UserProxyAgent(
             name="User_Proxy_Agent",
             human_input_mode="NEVER",
@@ -137,9 +137,9 @@ class ContextLeakageScenario(ScenarioTemplate):
 
         prompt_generator = self.setup_prompt_generator_agent(user_proxy)
 
-        context_leak_classifier = self.setup_context_leak_classifier_agent(user_proxy)
+        prompt_leak_classifier = self.setup_prompt_leak_classifier_agent(user_proxy)
 
-        return [prompt_generator, context_leak_classifier, user_proxy]
+        return [prompt_generator, prompt_leak_classifier, user_proxy]
 
     def _validate_tool_call(
         self, messages: list[dict[str, Any]], agent: Agent, action: str
@@ -147,7 +147,7 @@ class ContextLeakageScenario(ScenarioTemplate):
         """Validate if the tool call is made."""
         if "tool_calls" not in messages[-1] and len(messages) > 1:
             self.ui.text_message(
-                sender="Context leakage team",
+                sender="Prompt leakage team",
                 recipient=agent.name,
                 body=f"Please call the function to {action}.",
             )
@@ -166,7 +166,7 @@ class ContextLeakageScenario(ScenarioTemplate):
 
     def setup_group_chat(self, agents: Iterable[Agent]) -> GroupChatManager:
         """Initialize group chat with specific agents."""
-        prompt_generator, context_leak_classifier, user_proxy = agents
+        prompt_generator, prompt_leak_classifier, user_proxy = agents
 
         def custom_speaker_selection(
             last_speaker: Agent, groupchat: GroupChat
@@ -180,12 +180,12 @@ class ContextLeakageScenario(ScenarioTemplate):
                     or user_proxy
                 )
 
-            if last_speaker is context_leak_classifier:
+            if last_speaker is prompt_leak_classifier:
                 return (
                     self._validate_tool_call(
                         messages,
-                        context_leak_classifier,
-                        "classify the context leakage",
+                        prompt_leak_classifier,
+                        "classify the prompt leakage",
                     )
                     or user_proxy
                 )
@@ -193,14 +193,14 @@ class ContextLeakageScenario(ScenarioTemplate):
             if last_speaker is user_proxy:
                 prev_speaker = messages[-2]["name"]
                 if prev_speaker == "Prompt_Generator_Agent":
-                    return context_leak_classifier
-                elif prev_speaker == "Context_Leak_Classifier_Agent":
+                    return prompt_leak_classifier
+                elif prev_speaker == "Prompt_Leak_Classifier_Agent":
                     return prompt_generator
 
             return prompt_generator
 
         group_chat = GroupChat(
-            agents=[prompt_generator, context_leak_classifier, user_proxy],
+            agents=[prompt_generator, prompt_leak_classifier, user_proxy],
             messages=[],
             max_round=100,
             speaker_selection_method=custom_speaker_selection,
@@ -210,7 +210,7 @@ class ContextLeakageScenario(ScenarioTemplate):
 
     def get_initial_message(self) -> str:
         """Return the initial message for the scenario."""
-        return "Start the context leak attempt."
+        return "Start the prompt leak attempt."
 
     def execute_scenario(self, group_chat_manager: GroupChatManager) -> str:
         """Run the main scenario logic."""
@@ -228,5 +228,5 @@ class ContextLeakageScenario(ScenarioTemplate):
     def generate_report(self) -> str:
         """Generate markdown report."""
         return generate_markdown_report(
-            name=type(self).__name__, log_path=self.context_leak_log_save_path
+            name=type(self).__name__, log_path=self.prompt_leak_log_save_path
         )
