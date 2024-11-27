@@ -43,7 +43,7 @@ The project comes with **Devcontainers** configured, enabling a streamlined deve
 
 When you open the application in your browser, you'll first see the workflow selection screen.
 
-![Workflow selection](relative%20imgs/workflow_selection.png?raw=true "Workflow selection")
+![Workflow selection](imgs/workflow_selection.png?raw=true "Workflow selection")
 
 ### Running the tests
 
