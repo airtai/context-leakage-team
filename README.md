@@ -13,6 +13,8 @@ Ensure you have the following installed:
 
 - Python >=3.10
 
+Ensure that you have your `OPENAI_API_KEY` exported to your environment.
+
 ## Setup Instructions
 
 ### 1. Install the Project
@@ -39,60 +41,24 @@ The project comes with **Devcontainers** configured, enabling a streamlined deve
 
 ## Application Usage
 
-When you open the application in your browser, you'll find:
+When you open the application in your browser, you'll first see the workflow selection screen.
 
+![Workflow selection](relative%20imgs/workflow_selection.png?raw=true "Workflow selection")
 
-## Adding New Agents and Scenarios
+### Running the tests
 
-### Agents
+Select the "Attempt to leak context from selected LLM model".
 
-To add new agents:
+Select the prompt leakage scenario you would like to test.
 
-- Locate existing agents in `context_leakage_team/workflow/agents/`.
-- Implement your new agent as a class inheriting the appropriate base classes.
-- Place the implementation in the `agents/` directory.
+Select the model you would like to test.
 
-### Scenarios
+Select how many attempts to leak the context will be made in this chat.
 
-To add new scenarios:
+Now, the `ContextLeakagePromptGeneratorAgent` will start to generate adversial prompts with a goal of making the tested Agent leak its prompt. After each response from the tested Agent, the `ContextLeakageClassifierAgent` will analyse the response and report the level of contect leakage.
 
-- Existing scenarios are organized under `context_leakage_team/workflow/scenarios/`.
-- Scenarios are structured by type of attack.
-- Add new scenarios as modules within the `scenarios/` directory, ensuring they follow the established structure.
+### Showing the reports
 
-## Folder Structure
+Select the "Report on the context leak attempt".
 
-Here is the basic folder structure:
-
-```
-├── agents
-│   ├── prompt_leakage_prompt_generator_agent.py  # Simple attack generator
-│   ├── prompt_leakage_classifier.py             # Simple attack classifier
-│   ├── base64_leakage_agent.py                  # Base64 attack generator
-├── scenarios
-│   ├── easy                                     # Easy scenarios
-│   ├── medium                                   # Medium scenarios
-│   └── hard                                     # Hard scenarios
-├── scripts
-│   └── run_fastapi_locally.sh                   # Script to start the application locally
-├── devcontainer                                 # Devcontainer configuration
-├── pyproject.toml                               # Project dependencies
-└── README.md                                    # Project documentation
-```
-
-## Example Usage
-
-1. Start the FastAPI application:
-   ```bash
-   ./scripts/run_fastapi_locally.sh
-   ```
-
-2. Open your browser and navigate to the application interface.
-
-3. Select a tested model endpoint (Easy, Medium, Hard).
-
-4. Use the provided agents and scenarios to test the model's susceptibility to prompt leakage.
-
-## License
-
-Include your license information here.
+## Tested models
