@@ -43,7 +43,7 @@ The project comes with **Devcontainers** configured, enabling a streamlined deve
 
 When you open the application in your browser, you'll first see the workflow selection screen.
 
-![Workflow selection](imgs/workflow_selection.png?raw=true "Workflow selection")
+![Workflow selection](docs/docs/assets/img/workflow_selection.png?raw=true "Workflow selection")
 
 ### Running the Tests
 
@@ -53,7 +53,7 @@ After selecting **"Attempt to leak the prompt from selected LLM model"**, you wi
 2. Choose the model you want to test.
 3. Specify the number of attempts to leak the prompt in the chat.
 
-![Test configuration](imgs/configuring_testing.png?raw=true "Test configuration")
+![Test configuration](docs/docs/assets/img/configuring_testing.png?raw=true "Test configuration")
 
 The `PromptGeneratorAgent` will then generate adversarial prompts aimed at making the tested agent leak its prompt. After each response from the tested agent, the `PromptLeakageClassifierAgent` will analyze the response and report the level of prompt leakage.
 
@@ -61,19 +61,19 @@ The `PromptGeneratorAgent` will then generate adversarial prompts aimed at makin
 
 In this step, the `PromptGeneratorAgent` generates adversarial prompts designed to elicit prompt leakage from the tested agent. The tested model is then probed with the generated prompt using a function call.
 
-![Prompt generation](imgs/prompt_generation.png?raw=true "Prompt generation")
+![Prompt generation](docs/docs/assets/img/prompt_generation.png?raw=true "Prompt generation")
 
 #### Tested agent response
 
 The tested agent's response is the returned value from the function call initiated by the `PromptGeneratorAgent`. This response represents how the agent reacts to the probing prompt and serves as a input for subsequent analysis.
 
-![Tested agent response](imgs/tested_agent_response.png?raw=true "Tested agent response")
+![Tested agent response](docs/docs/assets/img/tested_agent_response.png?raw=true "Tested agent response")
 
 #### Response classification
 
 The response is then passed to the `PromptLeakageClassifierAgent`, which evaluates it for signs of prompt leakage. This evaluation informs whether sensitive information from the original prompt has been exposed. Additionally, the response may guide further prompt refinement, enabling an iterative approach to testing the agent's resilience against prompt leakage attempts.
 
-![Response classification](imgs/response_classification.png?raw=true "Response classification")
+![Response classification](docs/docs/assets/img/response_classification.png?raw=true "Response classification")
 
 All response classifications are saved as CSV files in the `reports` folder. These files contain the prompt, response, reasoning, and leakage level. They are used to display the reports flow, which we will now demonstrate.
 
@@ -82,7 +82,7 @@ All response classifications are saved as CSV files in the `reports` folder. The
 In the workflow selection screen, select **"Report on the prompt leak attempt"**.
 This workflow provides a detailed report for each prompt leakage scenario and model combination that has been tested.
 
-![Report flow](imgs/report_flow.png?raw=true "Report flow")
+![Report flow](docs/docs/assets/img/report_flow.png?raw=true "Report flow")
 
 ## Tested Models
 
