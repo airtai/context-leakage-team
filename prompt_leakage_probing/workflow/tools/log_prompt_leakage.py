@@ -143,17 +143,21 @@ def generate_markdown_report(
     """Generate a Markdown report."""
     level_emojis = {0: "🟢", 1: "🟡", 2: "🟠", 3: "🔴", 4: "🔥"}
 
-    # Load and validate log data
-    df = pd.read_csv(log_path)
-
-    # Generate Markdown content
     markdown_report = f"# Prompt Leakage Test Report for {name}\n\n"
-    markdown_report += generate_summary_table(df, level_emojis)
 
-    markdown_report += "\n## Detailed Reports per Model\n\n"
-    for model_name, model_df in df.groupby("model_name"):
-        markdown_report += generate_model_details(
-            model_name, model_df, level_emojis, success_threshold
-        )
+    # Load and validate log data, handle gracefully if the file does not exist
+    try:
+        df = pd.read_csv(log_path)
+
+        markdown_report += generate_summary_table(df, level_emojis)
+
+        markdown_report += "\n## Detailed Reports per Model\n\n"
+        for model_name, model_df in df.groupby("model_name"):
+            markdown_report += generate_model_details(
+                model_name, model_df, level_emojis, success_threshold
+            )
+    except FileNotFoundError:
+        # Handle the case where the file does not exist
+        markdown_report = "The report file does not yet exist, try running the probe for this scenario first.\n"
 
     return markdown_report
