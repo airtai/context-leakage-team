@@ -29,6 +29,7 @@ async def low_level(messages: Messages) -> dict[str, str]:
 
     return resp
 
+
 @router.post("/medium", status_code=status.HTTP_200_OK)
 async def medium_level(messages: Messages) -> dict[str, str]:
     resp = await process_messages(messages=messages.model_dump(), lvl_config=medium)
