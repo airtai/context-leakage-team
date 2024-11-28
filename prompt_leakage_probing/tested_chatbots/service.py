@@ -14,6 +14,8 @@ config = get_config()
 
 gpt_robin = get_gpt_robin()
 
+model = "gpt-4o-mini"
+
 
 async def process_messages(  # noqa: C901
     messages: dict[str, Any], lvl_config: LevelConfig
@@ -43,7 +45,7 @@ async def process_messages(  # noqa: C901
             attempt += 1
             try:
                 response = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=model,
                     messages=chat_messages,
                     functions=functions,
                     function_call="auto",
@@ -63,7 +65,7 @@ async def process_messages(  # noqa: C901
                         }
                     )
                     response = await client.chat.completions.create(
-                        model="gpt-4o-mini",
+                        model=model,
                         messages=chat_messages,
                         functions=functions,
                         function_call=None,  # Disabling calling function again
@@ -86,7 +88,7 @@ async def process_messages(  # noqa: C901
                     ]
 
                     guard_response = await client.chat.completions.create(
-                        model="gpt-4o-mini", messages=guard_messages
+                        model=model, messages=guard_messages
                     )
 
                     if guard_response.choices[0].message.content == "GOOD":
