@@ -18,7 +18,7 @@ dependencies = [
     "fastagency[autogen,mesop,server,fastapi]==0.3.3",
     "pandas==2.2.3",
     "gunicorn==23.0.0",
-    "pydantic==2.9.0",
+    "pydantic==2.10.3",
     "pydantic-settings==2.6.1",
     "httpx<0.28.0",
 ]
