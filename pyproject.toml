@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 dependencies = [
-    "fastagency[autogen,mesop,server,fastapi]==0.3.3",
+    "fastagency[autogen,mesop,server,fastapi]==0.3.4",
     "pandas==2.2.3",
     "gunicorn==23.0.0",
     "pydantic==2.9.0",
